@@ -106,6 +106,47 @@ gdrv drives get DRIVE_ID --json
 gdrv files list --drive-id DRIVE_ID --json
 ```
 
+## Admin SDK
+
+```bash
+gdrv auth service-account --key-file ./service-account-key.json --impersonate-user admin@example.com --preset admin
+gdrv admin users list --domain example.com --json
+gdrv admin users get user@example.com --json
+gdrv admin users create newuser@example.com --given-name "John" --family-name "Doe" --password "TempPass123!"
+gdrv admin users update user@example.com --given-name "Jane" --family-name "Smith"
+gdrv admin users suspend user@example.com
+gdrv admin users delete user@example.com
+gdrv admin groups list --domain example.com --json
+gdrv admin groups create group@example.com "Team Group" --description "Team access group"
+gdrv admin groups members list team@example.com --json
+gdrv admin groups members add team@example.com user@example.com --role MEMBER
+gdrv admin groups members remove team@example.com user@example.com
+```
+
+## Sync
+
+```bash
+gdrv sync init ./local-folder REMOTE_FOLDER_ID --json
+gdrv sync init ./local-folder REMOTE_FOLDER_ID --direction push --conflict local-wins --json
+gdrv sync init ./local-folder REMOTE_FOLDER_ID --exclude "*.tmp,node_modules" --json
+gdrv sync list --json
+gdrv sync status CONFIG_ID --json
+gdrv sync CONFIG_ID --json
+gdrv sync push CONFIG_ID --json
+gdrv sync pull CONFIG_ID --json
+gdrv sync CONFIG_ID --delete --json
+gdrv sync CONFIG_ID --concurrency 10 --json
+gdrv sync remove CONFIG_ID --json
+```
+
+## Config
+
+```bash
+gdrv config show
+gdrv config set output_format json
+gdrv config reset
+```
+
 ## Multiple Profiles
 
 ```bash
@@ -120,7 +161,7 @@ gdrv --profile work files list --json
 2. **Use `--paginate`** to get all results without missing items
 3. **Use `--dry-run`** before destructive operations
 4. **Use file IDs** not paths for Shared Drives
-5. **Check exit codes**: 0=success, 2=auth required, 3=invalid argument, 4=not found, 5=permission denied, 6=rate limited
+5. **Check exit codes**: 0=success, 1=general error, 2=auth required, 3=invalid argument, 4=not found, 5=permission denied, 6=rate limited
 
 ## Common Workflows
 
@@ -145,4 +186,13 @@ gdrv files download FILE_ID --output local-copy.pdf
 RESULT=$(gdrv sheets create "Data Report" --json)
 SHEET_ID=$(echo $RESULT | jq -r '.spreadsheetId')
 gdrv sheets values update $SHEET_ID "Sheet1!A1" --values '[["Name","Value"],["Item1",100],["Item2",200]]'
+```
+
+### Sync Local Folder with Drive
+
+```bash
+RESULT=$(gdrv sync init ./projects REMOTE_FOLDER_ID --json)
+CONFIG_ID=$(echo $RESULT | jq -r '.id')
+gdrv sync status $CONFIG_ID --json
+gdrv sync $CONFIG_ID --json
 ```
