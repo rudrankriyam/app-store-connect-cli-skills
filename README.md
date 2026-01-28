@@ -78,12 +78,6 @@ Install this skill pack:
 npx add-skill rudrankriyam/asc-skills
 ```
 
-Install Vercel's official skills collection:
-
-```bash
-npx add-skill vercel-labs/agent-skills
-```
-
 ## Usage
 
 Skills are automatically available once installed. The agent will use them when relevant tasks are detected.
