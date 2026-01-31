@@ -70,6 +70,15 @@ Build processing, latest build resolution, and cleanup.
 - You are waiting on build processing
 - You want automated cleanup and retention policies
 
+### asc-ppp-pricing
+
+Territory-specific pricing using purchasing power parity (PPP).
+
+**Use when:**
+- You want different prices for different countries
+- You are implementing localized pricing strategies
+- You need to adjust prices based on regional purchasing power
+
 ## Installation
 
 Install this skill pack:
