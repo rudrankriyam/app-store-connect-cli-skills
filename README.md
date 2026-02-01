@@ -14,6 +14,16 @@ Guidance for running `asc` commands (flags, pagination, output, auth).
 - You need the correct `asc` command or flag combination
 - You want JSON-first output and pagination tips for automation
 
+### asc-xcode-build
+
+Build, archive, and export iOS/macOS apps with xcodebuild before uploading.
+
+**Use when:**
+- You need to create an IPA or PKG for upload
+- You're setting up CI/CD build pipelines
+- You need to configure ExportOptions.plist
+- You're troubleshooting encryption compliance issues
+
 ### asc-release-flow
 
 End-to-end release workflows for TestFlight and App Store.
@@ -21,6 +31,7 @@ End-to-end release workflows for TestFlight and App Store.
 **Use when:**
 - You want to upload, distribute, and submit in one flow
 - You need the manual sequence for fine-grained control
+- You're releasing for iOS, macOS, visionOS, or tvOS
 
 ### asc-signing-setup
 
@@ -45,6 +56,7 @@ Metadata and localization sync (including Fastlane format).
 **Use when:**
 - You are updating App Store metadata or localizations
 - You need to validate character limits before upload
+- You need to update privacy policy URL or app-level metadata
 
 ### asc-submission-health
 
@@ -53,6 +65,7 @@ Preflight checks, submission, and review monitoring.
 **Use when:**
 - You want to reduce submission failures
 - You need to track review status and re-submit safely
+- You're troubleshooting "version not in valid state" errors
 
 ### asc-testflight-orchestration
 
@@ -84,7 +97,7 @@ Territory-specific pricing using purchasing power parity (PPP).
 Install this skill pack:
 
 ```bash
-npx add-skill rudrankriyam/asc-skills
+npx add-skill rudrankriyam/app-store-connect-cli-skills
 ```
 
 ## Usage
@@ -92,6 +105,10 @@ npx add-skill rudrankriyam/asc-skills
 Skills are automatically available once installed. The agent will use them when relevant tasks are detected.
 
 **Examples:**
+
+```
+Build and upload my macOS app to App Store Connect
+```
 
 ```
 Publish my `MyApp` build `1.2.3` to TestFlight group `Beta Testers` and wait for processing
@@ -103,6 +120,10 @@ Set up signing for bundle ID `com.example.app`: enable iCloud, create a distribu
 
 ```
 Validate Fastlane metadata in `./metadata` and sync it to App Store Connect for version `1.2.3`
+```
+
+```
+Submit my iOS app version 2.0 to App Store review
 ```
 
 ## Skill Structure
