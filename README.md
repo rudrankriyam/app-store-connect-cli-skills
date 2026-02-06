@@ -92,6 +92,15 @@ Territory-specific pricing using purchasing power parity (PPP).
 - You are implementing localized pricing strategies
 - You need to adjust prices based on regional purchasing power
 
+### asc-notarization
+
+Archive, export, and notarize macOS apps with Developer ID signing.
+
+**Use when:**
+- You need to notarize a macOS app for distribution outside the App Store
+- You want the full flow: archive → Developer ID export → zip → notarize → staple
+- You're troubleshooting Developer ID signing or trust chain issues
+
 ## Installation
 
 Install this skill pack:
