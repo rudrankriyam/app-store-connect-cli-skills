@@ -106,7 +106,7 @@ Archive, export, and notarize macOS apps with Developer ID signing.
 Install this skill pack:
 
 ```bash
-npx add-skill rudrankriyam/app-store-connect-cli-skills
+npx skills add rudrankriyam/app-store-connect-cli-skills
 ```
 
 ## Usage
