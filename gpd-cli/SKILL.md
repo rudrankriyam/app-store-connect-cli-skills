@@ -7,6 +7,17 @@ description: Manage Google Play Developer Console using the gpd CLI. Use when wo
 
 Manage Google Play Developer Console using the `gpd` command-line tool.
 
+## Related Skills
+
+- `gpd-cli-usage`: command discovery, flags, auth, and output conventions
+- `gpd-release-flow`: end-to-end track releases and rollouts
+- `gpd-submission-health`: preflight checks and validation
+- `gpd-metadata-sync`: listings, assets, and Fastlane metadata
+- `gpd-ppp-pricing`: regional pricing workflows
+- `gpd-build-lifecycle`: build processing and release state
+- `gpd-betagroups`: beta testers and distribution
+- `gpd-id-resolver`: resolve package, track, and monetization IDs
+
 ## Prerequisites
 
 ```bash
@@ -16,6 +27,13 @@ export GPD_SERVICE_ACCOUNT_KEY='{"type": "service_account", ...}'
 gpd auth status
 gpd auth check --package com.example.app
 ```
+
+## CLI Usage
+
+- Use `gpd --help` and `gpd <area> --help` to confirm commands and flags.
+- Default output is minified JSON; use `--pretty` when you need readable output.
+- Use `--dry-run` when available before destructive operations.
+- Destructive actions require `--confirm` (for example: halt, rollback, delete).
 
 ## Publishing
 
