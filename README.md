@@ -24,6 +24,15 @@ Build, archive, and export iOS/macOS apps with xcodebuild before uploading.
 - You need to configure ExportOptions.plist
 - You're troubleshooting encryption compliance issues
 
+### asc-shots-pipeline
+
+Agent-first screenshot pipeline using xcodebuild/simctl, AXe, JSON plans, and asc screenshot upload.
+
+**Use when:**
+- You need a repeatable simulator screenshot automation flow
+- You want AXe-based UI driving before capture
+- You need a staged pipeline (capture -> frame later -> upload)
+
 ### asc-release-flow
 
 End-to-end release workflows for TestFlight and App Store.
