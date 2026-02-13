@@ -1,21 +1,22 @@
 ---
 name: asc-shots-pipeline
-description: Orchestrate iOS screenshot automation with xcodebuild/simctl for build-run, AXe for UI actions, JSON settings and plan files, and asc asset upload. Use when users ask for automated screenshot capture, AXe-driven simulator flows, or screenshot to upload pipelines.
+description: Orchestrate iOS screenshot automation with xcodebuild/simctl for build-run, AXe for UI actions, JSON settings and plan files, Go-based framing (`asc shots frame`), and asc asset upload. Use when users ask for automated screenshot capture, AXe-driven simulator flows, frame composition, or screenshot to upload pipelines.
 ---
 
-# ASC shots pipeline (xcodebuild -> AXe -> asc)
+# ASC shots pipeline (xcodebuild -> AXe -> frame -> asc)
 
 Use this skill for agent-driven screenshot workflows where the app is built and launched with Xcode CLI tools, UI is driven with AXe, and screenshots are uploaded with `asc`.
 
 ## Current scope
-- Implemented now: build/run, capture plan, settings JSON, upload from raw screenshots.
-- Planned later: framing/composition step between capture and upload.
+- Implemented now: build/run, AXe plan capture, frame composition, and upload.
+- Device discovery is built-in via `asc shots frames list-devices`.
 
 ## Defaults
 - Settings file: `.asc/shots.settings.json`
 - Capture plan: `.asc/screenshots.json`
 - Raw screenshots dir: `./screenshots/raw`
-- Future framed dir: `./screenshots/framed`
+- Framed screenshots dir: `./screenshots/framed`
+- Default frame device: `iphone-air`
 
 ## 1) Create settings JSON first
 
@@ -36,16 +37,20 @@ Create or update `.asc/shots.settings.json`:
     "framed_dir": "./screenshots/framed"
   },
   "pipeline": {
-    "frame_enabled": false,
+    "frame_enabled": true,
     "upload_enabled": false
   },
   "upload": {
     "version_localization_id": "",
     "device_type": "IPHONE_65",
-    "source_dir": "./screenshots/raw"
+    "source_dir": "./screenshots/framed"
   }
 }
 ```
+
+If you intentionally skip framing, set:
+- `"frame_enabled": false`
+- `"upload.source_dir": "./screenshots/raw"`
 
 ## 2) Build and run app on simulator
 
@@ -103,20 +108,39 @@ Minimal `.asc/screenshots.json` example:
 }
 ```
 
-## 4) Frame step (placeholder)
+## 4) Frame screenshots with `asc shots frame`
 
-Framing is intentionally not implemented yet. Keep this stage as a pass-through for now:
-- if `frame_enabled=false`, upload from `./screenshots/raw`
-- if enabled in future, write framed outputs to `./screenshots/framed`
+List supported frame device values first:
+
+```bash
+asc shots frames list-devices --output json
+```
+
+Frame one screenshot (defaults to `iphone-air`):
+
+```bash
+asc shots frame \
+  --input "./screenshots/raw/home.png" \
+  --output-dir "./screenshots/framed" \
+  --device "iphone-air" \
+  --output json
+```
+
+Supported `--device` values:
+- `iphone-air` (default)
+- `iphone-17-pro`
+- `iphone-17-pro-max`
+- `iphone-16e`
+- `iphone-17`
 
 ## 5) Upload screenshots with asc
 
-Upload from the configured source directory (default `./screenshots/raw`):
+Upload from the configured source directory (default `./screenshots/framed` when framing is enabled):
 
 ```bash
 asc assets screenshots upload \
   --version-localization "LOC_ID" \
-  --path "./screenshots/raw" \
+  --path "./screenshots/framed" \
   --device-type "IPHONE_65" \
   --output json
 ```
@@ -131,5 +155,6 @@ asc assets screenshots list --version-localization "LOC_ID" --output table
 ## Agent behavior
 - Always confirm exact flags with `--help` before running commands.
 - Keep outputs deterministic: default to JSON for machine steps.
+- Prefer `asc shots frames list-devices --output json` before selecting a frame device.
 - Ensure screenshot files exist before upload.
 - Use explicit long flags (`--app`, `--output`, `--version-localization`, etc.).
