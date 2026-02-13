@@ -1,0 +1,135 @@
+---
+name: asc-shots-pipeline
+description: Orchestrate iOS screenshot automation with xcodebuild/simctl for build-run, AXe for UI actions, JSON settings and plan files, and asc asset upload. Use when users ask for automated screenshot capture, AXe-driven simulator flows, or screenshot to upload pipelines.
+---
+
+# ASC shots pipeline (xcodebuild -> AXe -> asc)
+
+Use this skill for agent-driven screenshot workflows where the app is built and launched with Xcode CLI tools, UI is driven with AXe, and screenshots are uploaded with `asc`.
+
+## Current scope
+- Implemented now: build/run, capture plan, settings JSON, upload from raw screenshots.
+- Planned later: framing/composition step between capture and upload.
+
+## Defaults
+- Settings file: `.asc/shots.settings.json`
+- Capture plan: `.asc/screenshots.json`
+- Raw screenshots dir: `./screenshots/raw`
+- Future framed dir: `./screenshots/framed`
+
+## 1) Create settings JSON first
+
+Create or update `.asc/shots.settings.json`:
+
+```json
+{
+  "version": 1,
+  "app": {
+    "bundle_id": "com.example.app",
+    "project": "MyApp.xcodeproj",
+    "scheme": "MyApp",
+    "simulator_udid": "booted"
+  },
+  "paths": {
+    "plan": ".asc/screenshots.json",
+    "raw_dir": "./screenshots/raw",
+    "framed_dir": "./screenshots/framed"
+  },
+  "pipeline": {
+    "frame_enabled": false,
+    "upload_enabled": false
+  },
+  "upload": {
+    "version_localization_id": "",
+    "device_type": "IPHONE_65",
+    "source_dir": "./screenshots/raw"
+  }
+}
+```
+
+## 2) Build and run app on simulator
+
+Use Xcode CLI for build/install/launch:
+
+```bash
+xcrun simctl boot "$UDID" || true
+
+xcodebuild \
+  -project "MyApp.xcodeproj" \
+  -scheme "MyApp" \
+  -configuration Debug \
+  -destination "platform=iOS Simulator,id=$UDID" \
+  -derivedDataPath ".build/DerivedData" \
+  build
+
+xcrun simctl install "$UDID" ".build/DerivedData/Build/Products/Debug-iphonesimulator/MyApp.app"
+xcrun simctl launch "$UDID" "com.example.app"
+```
+
+Use `xcodebuild -showBuildSettings` if the app bundle path differs from the default location.
+
+## 3) Capture screenshots with AXe (or `asc shots run`)
+
+Prefer plan-driven capture:
+
+```bash
+asc shots run --plan ".asc/screenshots.json" --udid "$UDID" --output json
+```
+
+Useful AXe primitives during plan authoring:
+
+```bash
+axe describe-ui --udid "$UDID"
+axe tap --id "search_field" --udid "$UDID"
+axe type "wwdc" --udid "$UDID"
+axe screenshot --output "./screenshots/raw/home.png" --udid "$UDID"
+```
+
+Minimal `.asc/screenshots.json` example:
+
+```json
+{
+  "version": 1,
+  "app": {
+    "bundle_id": "com.example.app",
+    "udid": "booted",
+    "output_dir": "./screenshots/raw"
+  },
+  "steps": [
+    { "action": "launch" },
+    { "action": "wait", "duration_ms": 800 },
+    { "action": "screenshot", "name": "home" }
+  ]
+}
+```
+
+## 4) Frame step (placeholder)
+
+Framing is intentionally not implemented yet. Keep this stage as a pass-through for now:
+- if `frame_enabled=false`, upload from `./screenshots/raw`
+- if enabled in future, write framed outputs to `./screenshots/framed`
+
+## 5) Upload screenshots with asc
+
+Upload from the configured source directory (default `./screenshots/raw`):
+
+```bash
+asc assets screenshots upload \
+  --version-localization "LOC_ID" \
+  --path "./screenshots/raw" \
+  --device-type "IPHONE_65" \
+  --output json
+```
+
+List or validate before upload when needed:
+
+```bash
+asc assets screenshots sizes --output table
+asc assets screenshots list --version-localization "LOC_ID" --output table
+```
+
+## Agent behavior
+- Always confirm exact flags with `--help` before running commands.
+- Keep outputs deterministic: default to JSON for machine steps.
+- Ensure screenshot files exist before upload.
+- Use explicit long flags (`--app`, `--output`, `--version-localization`, etc.).
