@@ -230,6 +230,7 @@ asc subscriptions list --group "GROUP_ID" --paginate
 - Use default JSON output for intermediate automation steps.
 - After bulk creation, always run the list command to verify completeness.
 - For apps with many subscriptions, process them sequentially per group to keep output readable.
+- If a create call fails for a locale, log the locale and error, then continue with the remaining locales. After the batch completes, report all failures together so the user can address them.
 
 ## Notes
 - Subscription display names are what users see on the subscription management sheet and in purchase dialogs.
