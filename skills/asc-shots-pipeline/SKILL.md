@@ -161,7 +161,7 @@ asc assets screenshots list --version-localization "LOC_ID" --output table
 
 ## 6) Multi-locale capture (optional)
 
-To capture screenshots in multiple App Store locales, use `xcrun simctl launch` with the `-e AppleLanguages` flag to set the locale:
+To capture screenshots in multiple App Store locales, pass localization launch arguments to `xcrun simctl launch`:
 
 ```bash
 # Define target locales
@@ -174,7 +174,7 @@ for LOCALE in "${LOCALES[@]}"; do
   xcrun simctl boot "iPhone 16 Pro ($LOCALE)" || true
 
   # Launch app with specific locale
-  xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+  xcrun simctl launch booted com.example.app -AppleLanguages "($LOCALE)"
 
   # Capture screenshot
   asc screenshots capture \
@@ -185,9 +185,9 @@ for LOCALE in "${LOCALES[@]}"; do
 done
 ```
 
-Key `simctl launch` flags:
-- `-e AppleLanguages "(LOCALE)"` - Sets the app's localization
-- `-e AppleLocale "LOCALE"` - Sets the locale (affects dates/currency)
+Key `simctl launch` localization arguments:
+- `-AppleLanguages "(LOCALE)"` - Sets the app's preferred language list
+- `-AppleLocale "LOCALE"` - Sets the locale (affects dates/currency)
 
 ## 7) Parallel execution for speed
 
@@ -205,7 +205,7 @@ capture_locale() {
   echo "Starting capture for $LOCALE"
 
   xcrun simctl boot "iPhone 16 Pro ($LOCALE)" || true
-  xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+  xcrun simctl launch booted com.example.app -AppleLanguages "($LOCALE)"
 
   asc screenshots capture \
     --bundle-id "com.example.app" \
@@ -240,7 +240,7 @@ Or use `xargs` for parallel execution:
 echo -e "en-US\nde-DE\nfr-FR\nja-JP" | xargs -P 4 -I {} bash -c '
   LOCALE={}
   xcrun simctl boot "iPhone 16 Pro ($LOCALE)"
-  xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+  xcrun simctl launch booted com.example.app -AppleLanguages "($LOCALE)"
   asc screenshots capture --bundle-id "com.example.app" --name "home" --output-dir "./screenshots/raw/$LOCALE"
 '
 ```
@@ -260,7 +260,7 @@ FRAMED_DIR="./screenshots/framed"
 for LOCALE in "${LOCALES[@]}"; do
   (
     xcrun simctl boot "iPhone 16 Pro ($LOCALE)" || true
-    xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+    xcrun simctl launch booted com.example.app -AppleLanguages "($LOCALE)"
     asc screenshots capture \
       --bundle-id "com.example.app" \
       --name "home" \
