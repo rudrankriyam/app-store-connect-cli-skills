@@ -92,6 +92,15 @@ Territory-specific pricing using purchasing power parity (PPP).
 - You are implementing localized pricing strategies
 - You need to adjust prices based on regional purchasing power
 
+### asc-subscription-localization
+
+Bulk-localize subscription and IAP display names across all App Store locales.
+
+**Use when:**
+- You want to set the same subscription display name in every language at once
+- You need to fill in missing subscription/group/IAP localizations
+- You're tired of clicking through each locale in App Store Connect manually
+
 ### asc-notarization
 
 Archive, export, and notarize macOS apps with Developer ID signing.
