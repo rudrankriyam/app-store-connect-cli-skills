@@ -161,88 +161,118 @@ asc assets screenshots list --version-localization "LOC_ID" --output table
 
 ## 6) Multi-locale capture (optional)
 
-To capture screenshots in multiple App Store locales, use `xcrun simctl launch` with the `-e AppleLanguages` flag to set the locale:
+Do not use `xcrun simctl launch ... -e AppleLanguages` for localization.
+`-e` is an environment variable pattern and does not reliably switch app language.
+
+For this pipeline, use simulator-wide locale defaults per UDID. This works with
+`asc shots capture`, which relaunches the app internally.
 
 ```bash
-# Define target locales
-LOCALES=("en-US" "de-DE" "fr-FR" "es-ES" "ja-JP" "ko-KR" "zh-Hans" "zh-Hant")
+# Map each locale to a dedicated simulator UDID.
+# (Create these simulators once with `xcrun simctl create`.)
+declare -A LOCALE_UDID=(
+  ["en-US"]="UDID_EN_US"
+  ["de-DE"]="UDID_DE_DE"
+  ["fr-FR"]="UDID_FR_FR"
+  ["ja-JP"]="UDID_JA_JP"
+)
 
-for LOCALE in "${LOCALES[@]}"; do
-  echo "Capturing $LOCALE..."
+set_simulator_locale() {
+  local UDID="$1"
+  local LOCALE="$2"            # e.g. de-DE
+  local LANG="${LOCALE%%-*}"   # de
+  local APPLE_LOCALE="${LOCALE/-/_}" # de_DE
 
-  # Boot simulator for this locale (format: "iPhone 16 Pro (en-US)")
-  xcrun simctl boot "iPhone 16 Pro ($LOCALE)" || true
+  xcrun simctl boot "$UDID" || true
+  xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLanguages -array "$LANG"
+  xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLocale -string "$APPLE_LOCALE"
+}
 
-  # Launch app with specific locale
-  xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+for LOCALE in "${!LOCALE_UDID[@]}"; do
+  UDID="${LOCALE_UDID[$LOCALE]}"
+  echo "Capturing $LOCALE on $UDID..."
+  set_simulator_locale "$UDID" "$LOCALE"
 
-  # Capture screenshot
-  asc screenshots capture \
+  xcrun simctl terminate "$UDID" "com.example.app" || true
+  asc shots capture \
     --bundle-id "com.example.app" \
     --name "home" \
+    --udid "$UDID" \
     --output-dir "./screenshots/raw/$LOCALE" \
     --output json
 done
 ```
 
-Key `simctl launch` flags:
-- `-e AppleLanguages "(LOCALE)"` - Sets the app's localization
-- `-e AppleLocale "LOCALE"` - Sets the locale (affects dates/currency)
+If you launch manually (outside `asc shots capture`), use app launch arguments:
+
+```bash
+xcrun simctl launch "$UDID" "com.example.app" -AppleLanguages "(de)" -AppleLocale "de_DE"
+```
 
 ## 7) Parallel execution for speed
 
-To capture multiple locales simultaneously, run captures in background processes:
+Run one locale per simulator UDID in parallel:
 
 ```bash
 #!/bin/bash
 # parallel-capture.sh
 
-LOCALES=("en-US" "de-DE" "fr-FR" "ja-JP")
-DEVICE="iphone-air"
+declare -A LOCALE_UDID=(
+  ["en-US"]="UDID_EN_US"
+  ["de-DE"]="UDID_DE_DE"
+  ["fr-FR"]="UDID_FR_FR"
+  ["ja-JP"]="UDID_JA_JP"
+)
 
 capture_locale() {
-  LOCALE=$1
-  echo "Starting capture for $LOCALE"
+  local LOCALE="$1"
+  local UDID="$2"
+  local LANG="${LOCALE%%-*}"
+  local APPLE_LOCALE="${LOCALE/-/_}"
 
-  xcrun simctl boot "iPhone 16 Pro ($LOCALE)" || true
-  xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+  echo "Starting $LOCALE on $UDID"
+  xcrun simctl boot "$UDID" || true
+  xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLanguages -array "$LANG"
+  xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLocale -string "$APPLE_LOCALE"
+  xcrun simctl terminate "$UDID" "com.example.app" || true
 
-  asc screenshots capture \
+  asc shots capture \
     --bundle-id "com.example.app" \
     --name "home" \
-    --output-dir "./screenshots/raw/$LOCALE"
+    --udid "$UDID" \
+    --output-dir "./screenshots/raw/$LOCALE" \
+    --output json
 
   echo "Completed $LOCALE"
 }
 
-# Launch all captures in parallel
-for LOCALE in "${LOCALES[@]}"; do
-  capture_locale "$LOCALE" &
+for LOCALE in "${!LOCALE_UDID[@]}"; do
+  capture_locale "$LOCALE" "${LOCALE_UDID[$LOCALE]}" &
 done
 
-# Wait for all to complete
 wait
-
 echo "All captures done. Now framing..."
-
-# Frame all screenshots (can also run in parallel)
-for LOCALE in "${LOCALES[@]}"; do
-  asc screenshots frame \
-    --input "./screenshots/raw/$LOCALE/home.png" \
-    --device "$DEVICE" \
-    --output "./screenshots/framed/$LOCALE/home.png"
-done
 ```
 
-Or use `xargs` for parallel execution:
+Or use `xargs` with `locale:udid` pairs:
 
 ```bash
-echo -e "en-US\nde-DE\nfr-FR\nja-JP" | xargs -P 4 -I {} bash -c '
-  LOCALE={}
-  xcrun simctl boot "iPhone 16 Pro ($LOCALE)"
-  xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
-  asc screenshots capture --bundle-id "com.example.app" --name "home" --output-dir "./screenshots/raw/$LOCALE"
-'
+printf "%s\n" \
+  "en-US:UDID_EN_US" \
+  "de-DE:UDID_DE_DE" \
+  "fr-FR:UDID_FR_FR" \
+  "ja-JP:UDID_JA_JP" | xargs -P 4 -I {} bash -c '
+    PAIR="{}"
+    LOCALE="${PAIR%%:*}"
+    UDID="${PAIR##*:}"
+    LANG="${LOCALE%%-*}"
+    APPLE_LOCALE="${LOCALE/-/_}"
+    xcrun simctl boot "$UDID" || true
+    xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLanguages -array "$LANG"
+    xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLocale -string "$APPLE_LOCALE"
+    xcrun simctl terminate "$UDID" "com.example.app" || true
+    asc shots capture --bundle-id "com.example.app" --name "home" --udid "$UDID" --output-dir "./screenshots/raw/$LOCALE" --output json
+  '
 ```
 
 ## 8) Full multi-locale pipeline example
@@ -251,19 +281,34 @@ echo -e "en-US\nde-DE\nfr-FR\nja-JP" | xargs -P 4 -I {} bash -c '
 #!/bin/bash
 # full-pipeline-multi-locale.sh
 
-LOCALES=("en-US" "de-DE" "fr-FR" "es-ES" "ja-JP")
+declare -A LOCALE_UDID=(
+  ["en-US"]="UDID_EN_US"
+  ["de-DE"]="UDID_DE_DE"
+  ["fr-FR"]="UDID_FR_FR"
+  ["es-ES"]="UDID_ES_ES"
+  ["ja-JP"]="UDID_JA_JP"
+)
+
 DEVICE="iphone-air"
 RAW_DIR="./screenshots/raw"
 FRAMED_DIR="./screenshots/framed"
 
-# Step 1: Parallel capture
-for LOCALE in "${LOCALES[@]}"; do
+# Step 1: Parallel capture with per-simulator locale defaults
+for LOCALE in "${!LOCALE_UDID[@]}"; do
   (
-    xcrun simctl boot "iPhone 16 Pro ($LOCALE)" || true
-    xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
-    asc screenshots capture \
+    UDID="${LOCALE_UDID[$LOCALE]}"
+    LANG="${LOCALE%%-*}"
+    APPLE_LOCALE="${LOCALE/-/_}"
+
+    xcrun simctl boot "$UDID" || true
+    xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLanguages -array "$LANG"
+    xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLocale -string "$APPLE_LOCALE"
+    xcrun simctl terminate "$UDID" "com.example.app" || true
+
+    asc shots capture \
       --bundle-id "com.example.app" \
       --name "home" \
+      --udid "$UDID" \
       --output-dir "$RAW_DIR/$LOCALE" \
       --output json
     echo "Captured $LOCALE"
@@ -272,12 +317,12 @@ done
 wait
 
 # Step 2: Parallel framing
-for LOCALE in "${LOCALES[@]}"; do
+for LOCALE in "${!LOCALE_UDID[@]}"; do
   (
-    asc screenshots frame \
+    asc shots frame \
       --input "$RAW_DIR/$LOCALE/home.png" \
+      --output-dir "$FRAMED_DIR/$LOCALE" \
       --device "$DEVICE" \
-      --output "$FRAMED_DIR/$LOCALE/home.png" \
       --output json
     echo "Framed $LOCALE"
   ) &
@@ -285,12 +330,12 @@ done
 wait
 
 # Step 3: Generate review (single run, aggregates all locales)
-asc screenshots review-generate \
+asc shots review-generate \
   --framed-dir "$FRAMED_DIR" \
   --output-dir "./screenshots/review"
 
 # Step 4: Upload (run per locale if needed)
-for LOCALE in "${LOCALES[@]}"; do
+for LOCALE in "${!LOCALE_UDID[@]}"; do
   asc assets screenshots upload \
     --version-localization "LOC_ID_FOR_$LOCALE" \
     --path "$FRAMED_DIR/$LOCALE" \
