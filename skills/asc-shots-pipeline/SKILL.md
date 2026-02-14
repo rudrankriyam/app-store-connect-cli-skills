@@ -1,15 +1,18 @@
 ---
 name: asc-shots-pipeline
-description: Orchestrate iOS screenshot automation with xcodebuild/simctl for build-run, AXe for UI actions, JSON settings and plan files, Go-based framing (`asc shots frame`), and asc asset upload. Use when users ask for automated screenshot capture, AXe-driven simulator flows, frame composition, or screenshot to upload pipelines.
+description: Orchestrate iOS screenshot automation with xcodebuild/simctl for build-run, AXe for UI actions, JSON settings and plan files, Go-based framing (`asc screenshots frame`), and screenshot upload (`asc screenshots upload`). Use when users ask for automated screenshot capture, AXe-driven simulator flows, frame composition, or screenshot-to-upload pipelines.
 ---
 
-# ASC shots pipeline (xcodebuild -> AXe -> frame -> asc)
+# ASC screenshots pipeline (xcodebuild -> AXe -> frame -> asc)
 
 Use this skill for agent-driven screenshot workflows where the app is built and launched with Xcode CLI tools, UI is driven with AXe, and screenshots are uploaded with `asc`.
 
 ## Current scope
 - Implemented now: build/run, AXe plan capture, frame composition, and upload.
-- Device discovery is built-in via `asc shots frames list-devices`.
+- Device discovery is built-in via `asc screenshots list-frame-devices`.
+- Local screenshot automation commands are experimental in ASC.
+- Framing is pinned to Koubou `0.13.0` for deterministic output.
+- Feedback/issues: https://github.com/rudrankriyam/App-Store-Connect-CLI/issues/new/choose
 
 ## Defaults
 - Settings file: `.asc/shots.settings.json`
@@ -73,12 +76,12 @@ xcrun simctl launch "$UDID" "com.example.app"
 
 Use `xcodebuild -showBuildSettings` if the app bundle path differs from the default location.
 
-## 3) Capture screenshots with AXe (or `asc shots run`)
+## 3) Capture screenshots with AXe (or `asc screenshots run`)
 
 Prefer plan-driven capture:
 
 ```bash
-asc shots run --plan ".asc/screenshots.json" --udid "$UDID" --output json
+asc screenshots run --plan ".asc/screenshots.json" --udid "$UDID" --output json
 ```
 
 Useful AXe primitives during plan authoring:
@@ -108,18 +111,26 @@ Minimal `.asc/screenshots.json` example:
 }
 ```
 
-## 4) Frame screenshots with `asc shots frame`
+## 4) Frame screenshots with `asc screenshots frame`
+
+ASC pins framing to Koubou `0.13.0`.
+Install and verify before running framing steps:
+
+```bash
+pip install koubou==0.13.0
+kou --version  # expect 0.13.0
+```
 
 List supported frame device values first:
 
 ```bash
-asc shots frames list-devices --output json
+asc screenshots list-frame-devices --output json
 ```
 
 Frame one screenshot (defaults to `iphone-air`):
 
 ```bash
-asc shots frame \
+asc screenshots frame \
   --input "./screenshots/raw/home.png" \
   --output-dir "./screenshots/framed" \
   --device "iphone-air" \
@@ -135,10 +146,18 @@ Supported `--device` values:
 
 ## 5) Upload screenshots with asc
 
+Generate and review artifacts before upload:
+
+```bash
+asc screenshots review-generate --framed-dir "./screenshots/framed" --output-dir "./screenshots/review"
+asc screenshots review-open --output-dir "./screenshots/review"
+asc screenshots review-approve --all-ready --output-dir "./screenshots/review"
+```
+
 Upload from the configured source directory (default `./screenshots/framed` when framing is enabled):
 
 ```bash
-asc assets screenshots upload \
+asc screenshots upload \
   --version-localization "LOC_ID" \
   --path "./screenshots/framed" \
   --device-type "IPHONE_65" \
@@ -148,16 +167,19 @@ asc assets screenshots upload \
 List or validate before upload when needed:
 
 ```bash
-asc assets screenshots sizes --output table
-asc assets screenshots list --version-localization "LOC_ID" --output table
+asc screenshots sizes --output table
+asc screenshots list --version-localization "LOC_ID" --output table
 ```
 
 ## Agent behavior
 - Always confirm exact flags with `--help` before running commands.
+- Re-check command paths with `asc screenshots --help` because screenshot commands are evolving quickly.
 - Keep outputs deterministic: default to JSON for machine steps.
-- Prefer `asc shots frames list-devices --output json` before selecting a frame device.
+- Prefer `asc screenshots list-frame-devices --output json` before selecting a frame device.
 - Ensure screenshot files exist before upload.
 - Use explicit long flags (`--app`, `--output`, `--version-localization`, etc.).
+- Treat screenshot-local automation as experimental and call it out in user-facing handoff notes.
+- If framing fails with a version error, re-install pinned Koubou: `pip install koubou==0.13.0`.
 
 ## 6) Multi-locale capture (optional)
 
@@ -165,7 +187,7 @@ Do not use `xcrun simctl launch ... -e AppleLanguages` for localization.
 `-e` is an environment variable pattern and does not reliably switch app language.
 
 For this pipeline, use simulator-wide locale defaults per UDID. This works with
-`asc shots capture`, which relaunches the app internally.
+`asc screenshots capture`, which relaunches the app internally.
 
 ```bash
 # Map each locale to a dedicated simulator UDID.
@@ -194,7 +216,7 @@ for LOCALE in "${!LOCALE_UDID[@]}"; do
   set_simulator_locale "$UDID" "$LOCALE"
 
   xcrun simctl terminate "$UDID" "com.example.app" || true
-  asc shots capture \
+  asc screenshots capture \
     --bundle-id "com.example.app" \
     --name "home" \
     --udid "$UDID" \
@@ -203,7 +225,7 @@ for LOCALE in "${!LOCALE_UDID[@]}"; do
 done
 ```
 
-If you launch manually (outside `asc shots capture`), use app launch arguments:
+If you launch manually (outside `asc screenshots capture`), use app launch arguments:
 
 ```bash
 xcrun simctl launch "$UDID" "com.example.app" -AppleLanguages "(de)" -AppleLocale "de_DE"
@@ -236,7 +258,7 @@ capture_locale() {
   xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLocale -string "$APPLE_LOCALE"
   xcrun simctl terminate "$UDID" "com.example.app" || true
 
-  asc shots capture \
+  asc screenshots capture \
     --bundle-id "com.example.app" \
     --name "home" \
     --udid "$UDID" \
@@ -271,7 +293,7 @@ printf "%s\n" \
     xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLanguages -array "$LANG"
     xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLocale -string "$APPLE_LOCALE"
     xcrun simctl terminate "$UDID" "com.example.app" || true
-    asc shots capture --bundle-id "com.example.app" --name "home" --udid "$UDID" --output-dir "./screenshots/raw/$LOCALE" --output json
+    asc screenshots capture --bundle-id "com.example.app" --name "home" --udid "$UDID" --output-dir "./screenshots/raw/$LOCALE" --output json
   '
 ```
 
@@ -305,7 +327,7 @@ for LOCALE in "${!LOCALE_UDID[@]}"; do
     xcrun simctl spawn "$UDID" defaults write NSGlobalDomain AppleLocale -string "$APPLE_LOCALE"
     xcrun simctl terminate "$UDID" "com.example.app" || true
 
-    asc shots capture \
+    asc screenshots capture \
       --bundle-id "com.example.app" \
       --name "home" \
       --udid "$UDID" \
@@ -319,7 +341,7 @@ wait
 # Step 2: Parallel framing
 for LOCALE in "${!LOCALE_UDID[@]}"; do
   (
-    asc shots frame \
+    asc screenshots frame \
       --input "$RAW_DIR/$LOCALE/home.png" \
       --output-dir "$FRAMED_DIR/$LOCALE" \
       --device "$DEVICE" \
@@ -330,13 +352,13 @@ done
 wait
 
 # Step 3: Generate review (single run, aggregates all locales)
-asc shots review-generate \
+asc screenshots review-generate \
   --framed-dir "$FRAMED_DIR" \
   --output-dir "./screenshots/review"
 
 # Step 4: Upload (run per locale if needed)
 for LOCALE in "${!LOCALE_UDID[@]}"; do
-  asc assets screenshots upload \
+  asc screenshots upload \
     --version-localization "LOC_ID_FOR_$LOCALE" \
     --path "$FRAMED_DIR/$LOCALE" \
     --device-type "IPHONE_65" \

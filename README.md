@@ -26,13 +26,14 @@ Build, archive, and export iOS/macOS apps with xcodebuild before uploading.
 
 ### asc-shots-pipeline
 
-Agent-first screenshot pipeline using xcodebuild/simctl, AXe, JSON plans, `asc shots frame`, and asc screenshot upload.
+Agent-first screenshot pipeline using xcodebuild/simctl, AXe, JSON plans, `asc screenshots frame` (experimental), and `asc screenshots upload`.
 
 **Use when:**
 - You need a repeatable simulator screenshot automation flow
 - You want AXe-based UI driving before capture
 - You need a staged pipeline (capture -> frame -> upload)
-- You need to discover supported frame devices (`asc shots frames list-devices`)
+- You need to discover supported frame devices (`asc screenshots list-frame-devices`)
+- You want pinned Koubou guidance for deterministic framing (`koubou==0.13.0`)
 
 ### asc-release-flow
 
