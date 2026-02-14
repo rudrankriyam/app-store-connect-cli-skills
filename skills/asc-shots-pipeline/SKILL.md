@@ -158,3 +158,143 @@ asc assets screenshots list --version-localization "LOC_ID" --output table
 - Prefer `asc shots frames list-devices --output json` before selecting a frame device.
 - Ensure screenshot files exist before upload.
 - Use explicit long flags (`--app`, `--output`, `--version-localization`, etc.).
+
+## 6) Multi-locale capture (optional)
+
+To capture screenshots in multiple App Store locales, use `xcrun simctl launch` with the `-e AppleLanguages` flag to set the locale:
+
+```bash
+# Define target locales
+LOCALES=("en-US" "de-DE" "fr-FR" "es-ES" "ja-JP" "ko-KR" "zh-Hans" "zh-Hant")
+
+for LOCALE in "${LOCALES[@]}"; do
+  echo "Capturing $LOCALE..."
+
+  # Boot simulator for this locale (format: "iPhone 16 Pro (en-US)")
+  xcrun simctl boot "iPhone 16 Pro ($LOCALE)" || true
+
+  # Launch app with specific locale
+  xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+
+  # Capture screenshot
+  asc screenshots capture \
+    --bundle-id "com.example.app" \
+    --name "home" \
+    --output-dir "./screenshots/raw/$LOCALE" \
+    --output json
+done
+```
+
+Key `simctl launch` flags:
+- `-e AppleLanguages "(LOCALE)"` - Sets the app's localization
+- `-e AppleLocale "LOCALE"` - Sets the locale (affects dates/currency)
+
+## 7) Parallel execution for speed
+
+To capture multiple locales simultaneously, run captures in background processes:
+
+```bash
+#!/bin/bash
+# parallel-capture.sh
+
+LOCALES=("en-US" "de-DE" "fr-FR" "ja-JP")
+DEVICE="iphone-air"
+
+capture_locale() {
+  LOCALE=$1
+  echo "Starting capture for $LOCALE"
+
+  xcrun simctl boot "iPhone 16 Pro ($LOCALE)" || true
+  xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+
+  asc screenshots capture \
+    --bundle-id "com.example.app" \
+    --name "home" \
+    --output-dir "./screenshots/raw/$LOCALE"
+
+  echo "Completed $LOCALE"
+}
+
+# Launch all captures in parallel
+for LOCALE in "${LOCALES[@]}"; do
+  capture_locale "$LOCALE" &
+done
+
+# Wait for all to complete
+wait
+
+echo "All captures done. Now framing..."
+
+# Frame all screenshots (can also run in parallel)
+for LOCALE in "${LOCALES[@]}"; do
+  asc screenshots frame \
+    --input "./screenshots/raw/$LOCALE/home.png" \
+    --device "$DEVICE" \
+    --output "./screenshots/framed/$LOCALE/home.png"
+done
+```
+
+Or use `xargs` for parallel execution:
+
+```bash
+echo -e "en-US\nde-DE\nfr-FR\nja-JP" | xargs -P 4 -I {} bash -c '
+  LOCALE={}
+  xcrun simctl boot "iPhone 16 Pro ($LOCALE)"
+  xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+  asc screenshots capture --bundle-id "com.example.app" --name "home" --output-dir "./screenshots/raw/$LOCALE"
+'
+```
+
+## 8) Full multi-locale pipeline example
+
+```bash
+#!/bin/bash
+# full-pipeline-multi-locale.sh
+
+LOCALES=("en-US" "de-DE" "fr-FR" "es-ES" "ja-JP")
+DEVICE="iphone-air"
+RAW_DIR="./screenshots/raw"
+FRAMED_DIR="./screenshots/framed"
+
+# Step 1: Parallel capture
+for LOCALE in "${LOCALES[@]}"; do
+  (
+    xcrun simctl boot "iPhone 16 Pro ($LOCALE)" || true
+    xcrun simctl launch booted com.example.app -e AppleLanguages "($LOCALE)"
+    asc screenshots capture \
+      --bundle-id "com.example.app" \
+      --name "home" \
+      --output-dir "$RAW_DIR/$LOCALE" \
+      --output json
+    echo "Captured $LOCALE"
+  ) &
+done
+wait
+
+# Step 2: Parallel framing
+for LOCALE in "${LOCALES[@]}"; do
+  (
+    asc screenshots frame \
+      --input "$RAW_DIR/$LOCALE/home.png" \
+      --device "$DEVICE" \
+      --output "$FRAMED_DIR/$LOCALE/home.png" \
+      --output json
+    echo "Framed $LOCALE"
+  ) &
+done
+wait
+
+# Step 3: Generate review (single run, aggregates all locales)
+asc screenshots review-generate \
+  --framed-dir "$FRAMED_DIR" \
+  --output-dir "./screenshots/review"
+
+# Step 4: Upload (run per locale if needed)
+for LOCALE in "${LOCALES[@]}"; do
+  asc assets screenshots upload \
+    --version-localization "LOC_ID_FOR_$LOCALE" \
+    --path "$FRAMED_DIR/$LOCALE" \
+    --device-type "IPHONE_65" \
+    --output json
+done
+```
