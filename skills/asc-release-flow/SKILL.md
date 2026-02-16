@@ -45,15 +45,19 @@ macOS apps are distributed as `.pkg` files, not `.ipa`.
 See `asc-xcode-build` skill for full build/archive/export workflow.
 
 ### Upload PKG
-Use `xcrun altool` (asc doesn't yet support .pkg uploads directly):
+Upload the exported `.pkg` using `asc`:
 ```bash
-# Ensure API key is in ~/.appstoreconnect/private_keys/
-xcrun altool --upload-app \
-  -f "/path/to/YourApp.pkg" \
-  --type macos \
-  --apiKey "$ASC_KEY_ID" \
-  --apiIssuer "$ASC_ISSUER_ID"
+asc builds upload \
+  --app <APP_ID> \
+  --pkg <PATH_TO_PKG> \
+  --version <VERSION> \
+  --build-number <BUILD_NUMBER> \
+  --wait
 ```
+
+Notes:
+- `--pkg` automatically sets platform to `MAC_OS`.
+- `asc publish appstore` currently supports `--ipa` workflows; for macOS `.pkg`, use `asc builds upload --pkg` + attach/submit steps below.
 
 ### Attach and Submit
 Same as iOS, but use `--platform MAC_OS`:

@@ -70,17 +70,20 @@ xcodebuild -exportArchive \
   -allowProvisioningUpdates
 ```
 
-### 3. Upload PKG
-macOS apps export as `.pkg` files. Use `xcrun altool`:
+### 3. Upload PKG with asc
+macOS apps export as `.pkg` files. Upload with `asc`:
 ```bash
-xcrun altool --upload-app \
-  -f "/tmp/YourMacAppExport/YourApp.pkg" \
-  --type macos \
-  --apiKey "$ASC_KEY_ID" \
-  --apiIssuer "$ASC_ISSUER_ID"
+asc builds upload \
+  --app "APP_ID" \
+  --pkg "/tmp/YourMacAppExport/YourApp.pkg" \
+  --version "1.0.0" \
+  --build-number "123"
 ```
 
-Note: The API key file must be in `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`
+Notes:
+- `--pkg` automatically sets platform to `MAC_OS`.
+- For `.pkg` uploads, `--version` and `--build-number` are required (they are not auto-extracted like IPA uploads).
+- Add `--wait` if you want to wait for build processing to complete.
 
 ## Build Number Management
 
