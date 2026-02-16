@@ -14,15 +14,6 @@ Guidance for running `asc` commands (flags, pagination, output, auth).
 - You need the correct `asc` command or flag combination
 - You want JSON-first output and pagination tips for automation
 
-### asc-app-create-ui
-
-Create a new App Store Connect app record via browser automation when no public API exists.
-
-**Use when:**
-- You need to create an app record (name, bundle ID, SKU, primary language)
-- The agent can drive the App Store Connect web UI after the user signs in
-- You want to automate the full flow: register bundle ID (API) → fill New App form (browser) → verify (API)
-
 ### asc-xcode-build
 
 Build, archive, and export iOS/macOS apps with xcodebuild before uploading.
