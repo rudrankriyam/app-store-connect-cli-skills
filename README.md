@@ -14,6 +14,15 @@ Guidance for running `asc` commands (flags, pagination, output, auth).
 - You need the correct `asc` command or flag combination
 - You want JSON-first output and pagination tips for automation
 
+### asc-workflow
+
+Define and run lane-style workflows using `asc workflow` and `.asc/workflow.json`.
+
+**Use when:**
+- You are migrating from lane-based automation to repo-local workflows
+- You want multi-step orchestration with JSON-only stdout for CI and agents
+- You need hooks (`before_all`, `after_all`, `error`), conditionals (`if`), and sub-workflows
+
 ### asc-app-create-ui
 
 Create a new App Store Connect app via browser automation when no API exists.
@@ -70,7 +79,7 @@ Resolve IDs for apps, builds, versions, groups, and testers.
 
 ### asc-metadata-sync
 
-Metadata and localization sync (including Fastlane format).
+Metadata and localization sync (including legacy metadata format migration).
 
 **Use when:**
 - You are updating App Store metadata or localizations
@@ -156,7 +165,8 @@ Set up signing for bundle ID `com.example.app`: enable iCloud, create a distribu
 ```
 
 ```
-Validate Fastlane metadata in `./metadata` and sync it to App Store Connect for version `1.2.3`
+Validate metadata in `./metadata` and sync it to App Store Connect for version `1.2.3`
+
 ```
 
 ```

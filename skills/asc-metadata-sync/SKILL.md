@@ -1,6 +1,6 @@
 ---
 name: asc-metadata-sync
-description: Sync and validate App Store metadata and localizations with asc, including Fastlane format migration. Use when updating metadata or translations.
+description: Sync and validate App Store metadata and localizations with asc, including legacy metadata format migration. Use when updating metadata or translations.
 ---
 
 # ASC Metadata Sync
@@ -39,7 +39,7 @@ asc localizations upload --app "APP_ID" --type app-info --app-info "APP_INFO_ID"
 
 **Note:** If you get "multiple app infos found", you must specify `--app-info` with the correct ID.
 
-## Fastlane Format Workflow
+## Legacy Metadata Format Workflow
 
 ### Export current state
 ```bash
@@ -48,13 +48,15 @@ asc migrate export --app "APP_ID" --output "./metadata"
 
 ### Validate local files
 ```bash
-asc migrate validate --fastlane-dir "./metadata"
+# Use --help to discover flags for your metadata directory
+asc migrate validate --help
 ```
 This checks character limits and required fields.
 
 ### Import updates
 ```bash
-asc migrate import --app "APP_ID" --fastlane-dir "./metadata"
+# Use --help to discover flags for your metadata directory
+asc migrate import --help
 ```
 
 ## Quick Field Updates
