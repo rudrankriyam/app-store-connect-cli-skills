@@ -3,7 +3,7 @@ name: asc-build-lifecycle
 description: Track build processing, find latest builds, and clean up old builds with asc. Use when managing build retention or waiting on processing.
 ---
 
-# ASC Build Lifecycle
+# asc build lifecycle
 
 Use this skill to manage build state, processing, and retention.
 

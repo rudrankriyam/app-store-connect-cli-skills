@@ -1,9 +1,9 @@
 ---
 name: asc-cli-usage
-description: Guidance for using the App Store Connect CLI in this repo (flags, output formats, pagination, auth, and discovery). Use when asked to run or design asc commands or interact with App Store Connect via the CLI.
+description: Guidance for using asc cli in this repo (flags, output formats, pagination, auth, and discovery). Use when asked to run or design asc commands or interact with App Store Connect via the CLI.
 ---
 
-# ASC CLI usage
+# asc cli usage
 
 Use this skill when you need to run or design `asc` commands for App Store Connect.
 

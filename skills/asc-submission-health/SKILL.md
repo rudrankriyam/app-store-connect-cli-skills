@@ -3,7 +3,7 @@ name: asc-submission-health
 description: Preflight App Store submissions, submit builds, and monitor review status with asc. Use when shipping or troubleshooting review submissions.
 ---
 
-# ASC Submission Health
+# asc submission health
 
 Use this skill to reduce review submission failures and monitor status.
 

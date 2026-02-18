@@ -3,14 +3,14 @@ name: asc-shots-pipeline
 description: Orchestrate iOS screenshot automation with xcodebuild/simctl for build-run, AXe for UI actions, JSON settings and plan files, Go-based framing (`asc screenshots frame`), and screenshot upload (`asc screenshots upload`). Use when users ask for automated screenshot capture, AXe-driven simulator flows, frame composition, or screenshot-to-upload pipelines.
 ---
 
-# ASC screenshots pipeline (xcodebuild -> AXe -> frame -> asc)
+# asc screenshots pipeline (xcodebuild -> AXe -> frame -> asc)
 
 Use this skill for agent-driven screenshot workflows where the app is built and launched with Xcode CLI tools, UI is driven with AXe, and screenshots are uploaded with `asc`.
 
 ## Current scope
 - Implemented now: build/run, AXe plan capture, frame composition, and upload.
 - Device discovery is built-in via `asc screenshots list-frame-devices`.
-- Local screenshot automation commands are experimental in ASC.
+- Local screenshot automation commands are experimental in asc cli.
 - Framing is pinned to Koubou `0.13.0` for deterministic output.
 - Feedback/issues: https://github.com/rudrankriyam/App-Store-Connect-CLI/issues/new/choose
 
@@ -113,7 +113,7 @@ Minimal `.asc/screenshots.json` example:
 
 ## 4) Frame screenshots with `asc screenshots frame`
 
-ASC pins framing to Koubou `0.13.0`.
+asc cli pins framing to Koubou `0.13.0`.
 Install and verify before running framing steps:
 
 ```bash
