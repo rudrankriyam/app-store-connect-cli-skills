@@ -3,7 +3,7 @@ name: asc-testflight-orchestration
 description: Orchestrate TestFlight distribution, groups, testers, and What to Test notes using asc. Use when rolling out betas.
 ---
 
-# ASC TestFlight Orchestration
+# asc TestFlight orchestration
 
 Use this skill when managing TestFlight testers, groups, and build distribution.
 

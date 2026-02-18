@@ -3,7 +3,7 @@ name: asc-app-create-ui
 description: Create a new App Store Connect app record via browser automation. Use when there is no public API for app creation and you need an agent to drive the New App form.
 ---
 
-# ASC App Create (UI Automation)
+# asc app create (UI automation)
 
 Use this skill to create a new App Store Connect app by driving the web UI.
 This is opt-in, local-only automation that requires the user to be signed in.

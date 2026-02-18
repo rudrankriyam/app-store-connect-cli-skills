@@ -3,7 +3,7 @@ name: asc-id-resolver
 description: Resolve App Store Connect IDs (apps, builds, versions, groups, testers) from human-friendly names using asc. Use when commands require IDs.
 ---
 
-# ASC ID Resolver
+# asc id resolver
 
 Use this skill to map names to IDs needed by other commands.
 

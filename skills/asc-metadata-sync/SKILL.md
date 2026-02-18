@@ -3,7 +3,7 @@ name: asc-metadata-sync
 description: Sync and validate App Store metadata and localizations with asc, including legacy metadata format migration. Use when updating metadata or translations.
 ---
 
-# ASC Metadata Sync
+# asc metadata sync
 
 Use this skill to keep local metadata in sync with App Store Connect.
 

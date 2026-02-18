@@ -3,7 +3,7 @@ name: asc-workflow
 description: Define, validate, and run lane-style multi-step automation sequences using `asc workflow` and a repo-local `.asc/workflow.json`. Use when migrating from lane-based automation, building enterprise CI flows, or orchestrating multi-command `asc` runs.
 ---
 
-# ASC Workflows (lane-style automation)
+# asc workflows (lane-style automation)
 
 Use this skill when you need to create or run `.asc/workflow.json` workflows via:
 - `asc workflow run`

@@ -1,6 +1,8 @@
-# App Store Connect CLI Skills
+# asc cli skills
 
-A collection of Agent Skills for shipping with the [App Store Connect CLI](https://github.com/rudrankriyam/App-Store-Connect-CLI) (`asc`). These skills are designed for zero-friction automation around builds, TestFlight, metadata, submissions, and signing.
+A collection of Agent Skills for shipping with the [asc cli](https://github.com/rudrankriyam/App-Store-Connect-CLI) (`asc`). These skills are designed for zero-friction automation around builds, TestFlight, metadata, submissions, and signing.
+
+This is a community-maintained, unofficial skill pack and is not affiliated with Apple.
 
 Skills follow the Agent Skills format.
 

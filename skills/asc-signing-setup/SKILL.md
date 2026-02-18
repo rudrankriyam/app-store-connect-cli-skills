@@ -1,9 +1,9 @@
 ---
 name: asc-signing-setup
-description: Set up bundle IDs, capabilities, signing certificates, and provisioning profiles with the asc CLI. Use when onboarding a new app or rotating signing assets.
+description: Set up bundle IDs, capabilities, signing certificates, and provisioning profiles with the asc cli. Use when onboarding a new app or rotating signing assets.
 ---
 
-# ASC Signing Setup
+# asc signing setup
 
 Use this skill when you need to create or renew signing assets for iOS/macOS apps.
 
