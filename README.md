@@ -18,12 +18,13 @@ Guidance for running `asc` commands (flags, pagination, output, auth).
 
 ### asc-workflow
 
-Define and run lane-style workflows using `asc workflow` and `.asc/workflow.json`.
+Define and run repo-local automation graphs using `asc workflow` and `.asc/workflow.json`.
 
 **Use when:**
 - You are migrating from lane-based automation to repo-local workflows
-- You want multi-step orchestration with JSON-only stdout for CI and agents
-- You need hooks (`before_all`, `after_all`, `error`), conditionals (`if`), and sub-workflows
+- You need multi-step orchestration with machine-parseable JSON output for CI/agents
+- You need hooks (`before_all`, `after_all`, `error`), conditionals (`if`), and private helper sub-workflows
+- You want validation (`asc workflow validate`) with cycle/reference checks before execution
 
 ### asc-app-create-ui
 
