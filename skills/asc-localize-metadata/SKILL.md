@@ -7,6 +7,17 @@ description: Automatically translate and sync App Store metadata (description, k
 
 Use this skill to pull English (or any source locale) App Store metadata, translate it with LLM, and push translations back to App Store Connect — all automated.
 
+## Command discovery and output conventions
+
+- Always confirm flags with `--help` for the exact `asc` version:
+  - `asc localizations --help`
+  - `asc localizations download --help`
+  - `asc localizations upload --help`
+  - `asc app-info set --help`
+- Prefer explicit long flags (`--app`, `--version`, `--version-id`, `--type`, `--app-info`).
+- Default output is JSON; use `--output table` only for human verification steps.
+- Prefer deterministic ID-based operations. Do not "pick the first row" via `head -1` unless the user explicitly agrees.
+
 ## Preconditions
 - Auth configured (`asc auth login` or `ASC_*` env vars)
 - Know your app ID (`asc apps list` to find it)
@@ -44,8 +55,13 @@ asc versions list --app "APP_ID" --state READY_FOR_DISTRIBUTION --output table
 asc versions list --app "APP_ID" --state PREPARE_FOR_SUBMISSION --output table
 
 # Find app info ID (for app-level fields like name/subtitle)
-asc app-infos list --app "APP_ID"
+asc app-infos list --app "APP_ID" --output table
 ```
+
+Notes:
+- Version-localization fields (description, keywords, whatsNew, etc.) are per-version.
+- App-info fields (name, subtitle, privacy URLs/text) are app-level and use `--type app-info`.
+- If you only have names (app name, version string) and need IDs deterministically, use `asc-id-resolver`.
 
 ### Step 2: Download source locale
 
@@ -91,6 +107,7 @@ Rules:
 - whatsNew: Translate release notes naturally. Max 4000 chars.
 - promotionalText: Translate marketing tagline. Max 170 chars.
 - subtitle: Adapt tagline creatively to fit 30 chars max.
+- name: Keep the original app name unless explicitly requested to translate it. Max 30 chars.
 - Respect cultural context. A playful tone in English may need adjustment for formal markets (e.g., ja, de-DE).
 
 Source ({source_locale}):
@@ -105,6 +122,8 @@ whatsNew: """
 """
 
 promotionalText: {promotionalText}
+
+name: {name}
 
 subtitle: {subtitle}
 ```
@@ -145,7 +164,9 @@ asc localizations upload --app "APP_ID" --type app-info --app-info "APP_INFO_ID"
 #### Option B: Via individual commands (fine control)
 
 ```bash
-asc app-info set --app "APP_ID" --locale "nl-NL" \
+# Version localization fields (fine control).
+# Prefer passing the explicit version ID for determinism.
+asc app-info set --app "APP_ID" --version-id "VERSION_ID" --locale "nl-NL" \
   --description "Je beschrijving..." \
   --keywords "wiskunde,kinderen,tafels" \
   --whats-new "Bugfixes en verbeteringen"
@@ -189,26 +210,32 @@ asc localizations list --app "APP_ID" --type app-info --app-info "APP_INFO_ID" -
 ## Full Example: Add nl-NL and ru to Roxy Math
 
 ```bash
-# 1. Get IDs
-APP_ID=$(asc apps list --quiet | head -1)
-VERSION_ID=$(asc versions list --app "$APP_ID" --state PREPARE_FOR_SUBMISSION --quiet | head -1)
-APP_INFO_ID=$(asc app-infos list --app "$APP_ID" --quiet | head -1)
+# 1) Resolve IDs deterministically (do not auto-pick the "first" row)
+# If you only have names, use asc-id-resolver skill.
+asc apps list --output table
+APP_ID="APP_ID_HERE"
 
-# 2. Download English source
+asc versions list --app "$APP_ID" --state PREPARE_FOR_SUBMISSION --output table
+VERSION_ID="VERSION_ID_HERE"
+
+asc app-infos list --app "$APP_ID" --output table
+APP_INFO_ID="APP_INFO_ID_HERE"
+
+# 2) Download English source (or your chosen source locale)
 asc localizations download --version "$VERSION_ID" --path "./localizations"
 asc localizations download --app "$APP_ID" --type app-info --app-info "$APP_INFO_ID" --path "./app-info-localizations"
 
-# 3. Read en-US.strings, translate to nl-NL and ru (LLM step)
+# 3) Read en-US.strings, translate to nl-NL and ru (LLM step)
 
-# 4. Write nl-NL.strings and ru.strings to:
+# 4) Write nl-NL.strings and ru.strings to:
 #    - ./localizations/ (version localization fields)
 #    - ./app-info-localizations/ (subtitle/name/privacy fields)
 
-# 5. Upload all
+# 5) Upload all
 asc localizations upload --version "$VERSION_ID" --path "./localizations"
 asc localizations upload --app "$APP_ID" --type app-info --app-info "$APP_INFO_ID" --path "./app-info-localizations"
 
-# 6. Verify
+# 6) Verify
 asc localizations list --version "$VERSION_ID" --output table
 asc localizations list --app "$APP_ID" --type app-info --app-info "$APP_INFO_ID" --output table
 ```
@@ -218,12 +245,13 @@ asc localizations list --app "$APP_ID" --type app-info --app-info "$APP_INFO_ID"
 1. **Always start by reading the source locale** — never translate from memory or assumptions.
 2. **Check existing localizations first** — don't overwrite existing translations unless the user asks to update them.
 3. **Version vs app-info is different** — version fields live under `--version "VERSION_ID"`; subtitle/name/privacy live under `--app ... --type app-info`.
-4. **Validate character limits** before uploading. Count characters for each field. If over limit, re-translate shorter.
-5. **Keywords are special** — do not literally translate. Research locale-appropriate search terms. Think like a user searching the App Store in that language.
-6. **Show the user translations before uploading** — present a summary table of all fields × locales for approval. Do not push without confirmation.
-7. **Process one locale at a time** if translating many languages — easier to review and catch errors.
-8. **If upload fails** for a locale, log the error, continue with other locales, report all failures at the end.
-9. **For updates to existing localizations** — download current, show diff of what will change, get approval, then upload.
+4. **Prefer deterministic IDs** — do not select IDs via `head -1` unless explicitly requested; use `--output table` for selection or `asc-id-resolver`.
+5. **Validate character limits** before uploading. Count characters for each field. If over limit, re-translate shorter.
+6. **Keywords are special** — do not literally translate. Research locale-appropriate search terms. Think like a user searching the App Store in that language.
+7. **Show the user translations before uploading** — present a summary table of all fields × locales for approval. Do not push without confirmation.
+8. **Process one locale at a time** if translating many languages — easier to review and catch errors.
+9. **If upload fails** for a locale, log the error, continue with other locales, report all failures at the end.
+10. **For updates to existing localizations** — download current, show diff of what will change, get approval, then upload.
 
 ## Notes
 - Version localizations are tied to a specific version. Create the version first if it doesn't exist.
