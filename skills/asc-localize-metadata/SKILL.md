@@ -50,11 +50,16 @@ asc app-infos list --app "APP_ID"
 ### Step 2: Download source locale
 
 ```bash
-# Download all existing localizations to local .strings files
+# Download version localizations to local .strings files
+# (description, keywords, whatsNew, promotionalText, supportUrl, marketingUrl, ...)
 asc localizations download --version "VERSION_ID" --path "./localizations"
+
+# Download app-info localizations to local .strings files
+# (name, subtitle, privacyPolicyUrl, privacyChoicesUrl, privacyPolicyText, ...)
+asc localizations download --app "APP_ID" --type app-info --app-info "APP_INFO_ID" --path "./app-info-localizations"
 ```
 
-This creates files like `./localizations/en-US.strings`. If download is unavailable, read fields individually:
+This creates files like `./localizations/en-US.strings` and `./app-info-localizations/en-US.strings`. If download is unavailable, read fields individually:
 
 ```bash
 # List version localizations to see existing locales and their content
@@ -108,7 +113,9 @@ subtitle: {subtitle}
 
 #### Option A: Via .strings files (bulk)
 
-Create a `.strings` file per locale in the localizations directory:
+Create a `.strings` file per locale in the appropriate directory.
+
+Version localization example:
 
 ```
 // nl-NL.strings
@@ -118,9 +125,21 @@ Create a `.strings` file per locale in the localizations directory:
 "promotionalText" = "Leer de tafels van vermenigvuldiging!";
 ```
 
-Then upload all at once:
+Then upload version localizations:
 ```bash
 asc localizations upload --version "VERSION_ID" --path "./localizations"
+```
+
+App-info localization example:
+
+```
+// nl-NL.strings
+"subtitle" = "Leer tafels spelenderwijs";
+```
+
+Then upload app-info localizations:
+```bash
+asc localizations upload --app "APP_ID" --type app-info --app-info "APP_INFO_ID" --path "./app-info-localizations"
 ```
 
 #### Option B: Via individual commands (fine control)
@@ -134,8 +153,14 @@ asc app-info set --app "APP_ID" --locale "nl-NL" \
 
 For app-level fields:
 ```bash
-# Subtitle (app info localization)
-asc app-infos localizations create --app-info "APP_INFO_ID" --locale "nl-NL" --subtitle "Leer tafels spelenderwijs"
+# Subtitle/name (app-info localization) is managed via app-info localizations.
+# Use the app-info localization .strings + upload flow (there is no `asc app-infos localizations ...` command).
+#
+# 1) Edit: ./app-info-localizations/nl-NL.strings
+# "subtitle" = "Leer tafels spelenderwijs";
+#
+# 2) Upload:
+asc localizations upload --app "APP_ID" --type app-info --app-info "APP_INFO_ID" --path "./app-info-localizations"
 ```
 
 ### Step 5: Verify
@@ -167,31 +192,38 @@ asc localizations list --app "APP_ID" --type app-info --app-info "APP_INFO_ID" -
 # 1. Get IDs
 APP_ID=$(asc apps list --quiet | head -1)
 VERSION_ID=$(asc versions list --app "$APP_ID" --state PREPARE_FOR_SUBMISSION --quiet | head -1)
+APP_INFO_ID=$(asc app-infos list --app "$APP_ID" --quiet | head -1)
 
 # 2. Download English source
 asc localizations download --version "$VERSION_ID" --path "./localizations"
+asc localizations download --app "$APP_ID" --type app-info --app-info "$APP_INFO_ID" --path "./app-info-localizations"
 
 # 3. Read en-US.strings, translate to nl-NL and ru (LLM step)
 
-# 4. Write nl-NL.strings and ru.strings to ./localizations/
+# 4. Write nl-NL.strings and ru.strings to:
+#    - ./localizations/ (version localization fields)
+#    - ./app-info-localizations/ (subtitle/name/privacy fields)
 
 # 5. Upload all
 asc localizations upload --version "$VERSION_ID" --path "./localizations"
+asc localizations upload --app "$APP_ID" --type app-info --app-info "$APP_INFO_ID" --path "./app-info-localizations"
 
 # 6. Verify
 asc localizations list --version "$VERSION_ID" --output table
+asc localizations list --app "$APP_ID" --type app-info --app-info "$APP_INFO_ID" --output table
 ```
 
 ## Agent Behavior
 
 1. **Always start by reading the source locale** — never translate from memory or assumptions.
 2. **Check existing localizations first** — don't overwrite existing translations unless the user asks to update them.
-3. **Validate character limits** before uploading. Count characters for each field. If over limit, re-translate shorter.
-4. **Keywords are special** — do not literally translate. Research locale-appropriate search terms. Think like a user searching the App Store in that language.
-5. **Show the user translations before uploading** — present a summary table of all fields × locales for approval. Do not push without confirmation.
-6. **Process one locale at a time** if translating many languages — easier to review and catch errors.
-7. **If upload fails** for a locale, log the error, continue with other locales, report all failures at the end.
-8. **For updates to existing localizations** — download current, show diff of what will change, get approval, then upload.
+3. **Version vs app-info is different** — version fields live under `--version "VERSION_ID"`; subtitle/name/privacy live under `--app ... --type app-info`.
+4. **Validate character limits** before uploading. Count characters for each field. If over limit, re-translate shorter.
+5. **Keywords are special** — do not literally translate. Research locale-appropriate search terms. Think like a user searching the App Store in that language.
+6. **Show the user translations before uploading** — present a summary table of all fields × locales for approval. Do not push without confirmation.
+7. **Process one locale at a time** if translating many languages — easier to review and catch errors.
+8. **If upload fails** for a locale, log the error, continue with other locales, report all failures at the end.
+9. **For updates to existing localizations** — download current, show diff of what will change, get approval, then upload.
 
 ## Notes
 - Version localizations are tied to a specific version. Create the version first if it doesn't exist.
