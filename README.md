@@ -89,6 +89,15 @@ Metadata and localization sync (including legacy metadata format migration).
 - You need to validate character limits before upload
 - You need to update privacy policy URL or app-level metadata
 
+### asc-localize-metadata
+
+Translate App Store metadata (description, keywords, what's new, subtitle) to multiple locales using LLM translation prompts and push via `asc`.
+
+**Use when:**
+- You want to localize an app's App Store listing from a source locale (usually en-US)
+- You need locale-aware keywords (not literal translations) and strict character limit enforcement
+- You want a review-before-upload workflow for translations
+
 ### asc-submission-health
 
 Preflight checks, submission, and review monitoring.
