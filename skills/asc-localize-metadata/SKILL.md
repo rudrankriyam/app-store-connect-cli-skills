@@ -87,6 +87,7 @@ asc localizations list --version "VERSION_ID" --output table
 For each target locale, translate the source text. Follow these rules:
 
 #### Translation Guidelines
+- **Tone & Register**: Always use formal, polite language. Use formal "you" forms where the language distinguishes them (Russian: «вы», German: «Sie», French: «vous», Spanish: «usted», Dutch: «u», Italian: «Lei», Portuguese: «você» formal, etc.). App Store descriptions are professional marketing copy — never use casual or informal register.
 - **description**: Translate naturally, adapt tone to local market. Keep formatting (line breaks, bullet points, emoji). Stay within 4000 chars.
 - **keywords**: Do NOT literally translate. Research what users in that locale would search for. Comma-separated, max 100 chars total. No duplicates, no app name (Apple adds it automatically).
 - **whatsNew**: Translate release notes. Keep it concise. Max 4000 chars.
@@ -108,6 +109,7 @@ Rules:
 - promotionalText: Translate marketing tagline. Max 170 chars.
 - subtitle: Adapt tagline creatively to fit 30 chars max.
 - name: Keep the original app name unless explicitly requested to translate it. Max 30 chars.
+- Use formal, polite language and formal "you" forms (Russian: вы, German: Sie, French: vous, Spanish: usted, Dutch: u, etc.). App Store copy is professional marketing — never use informal register.
 - Respect cultural context. A playful tone in English may need adjustment for formal markets (e.g., ja, de-DE).
 
 Source ({source_locale}):
