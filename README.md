@@ -6,6 +6,7 @@ Reusable capabilities for AI coding agents.
 
 | Skill | Description |
 |-------|-------------|
+| [grokipedia-cli](./grokipedia-cli/) | Interact with Grokipedia API for wiki search and content management |
 | [gdrv-cli](./gdrv-cli/) | Manage Google Drive files, folders, Sheets, Docs, and Slides |
 | [gpd-cli](./gpd-cli/) | Manage Google Play Developer Console for Android app publishing |
 | [gpd-cli-usage](./gpd-cli-usage/) | Usage guidance for gpd commands (flags, output, auth) |
@@ -28,6 +29,7 @@ npx skills add dl-alexandre/Skills
 Or install a specific skill:
 
 ```bash
+npx skills add dl-alexandre/Skills --skill grokipedia-cli
 npx skills add dl-alexandre/Skills --skill gdrv-cli
 npx skills add dl-alexandre/Skills --skill gpd-cli
 npx skills add dl-alexandre/Skills --skill gpd-release-flow
@@ -39,10 +41,27 @@ npx skills add dl-alexandre/Skills --skill ams-cli
 
 ## Requirements
 
+- [Grokipedia CLI](https://github.com/dl-alexandre/Grokipedia-CLI) - for grokipedia-cli skill
 - [gdrv CLI](https://github.com/dl-alexandre/Google-Drive-CLI) - for gdrv-cli skill
 - [gpd CLI](https://github.com/dl-alexandre/Google-Play-Developer-CLI) - for gpd-* skills
 - [ask CLI](https://github.com/dl-alexandre/App-StoreKit-CLI) - for ask-cli skill
 - [ams CLI](https://github.com/dl-alexandre/Apple-Map-Server-CLI) - for ams-cli skill
+
+## Grokipedia Quickstart
+
+```bash
+# Search for pages
+grokipedia search "python programming"
+
+# View a specific page
+grokipedia page Python_programming_language --content
+
+# Get search suggestions
+grokipedia typeahead "pyt"
+
+# List edit requests
+grokipedia edits --status pending
+```
 
 ## GPD Quickstart
 
