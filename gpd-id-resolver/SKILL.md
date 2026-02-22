@@ -45,4 +45,4 @@ Use this skill to map names to IDs needed by other gpd commands.
 
 ## Output tips
 - JSON is default; use `--pretty` for debugging.
-- Use `--paginate` on list commands to avoid missing items.
+- Use `--all` on list commands to avoid missing items.

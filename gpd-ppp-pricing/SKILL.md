@@ -27,13 +27,20 @@ gpd monetization baseplans batch-migrate-prices --package com.example.app sub123
 Example `migrate.json`:
 ```json
 {
-  "basePlans": [
+  "requests": [
     {
       "basePlanId": "plan456",
-      "regionCode": "US",
-      "priceMicros": 9990000
+      "regionalPriceMigrations": [
+        {
+          "regionCode": "US",
+          "priceMicros": 9990000
+        }
+      ]
     }
-  ]
+  ],
+  "regionsVersion": {
+    "version": "2024-01-01"
+  }
 }
 ```
 

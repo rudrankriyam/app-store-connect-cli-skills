@@ -30,7 +30,7 @@ Use when you need precise control or multiple changes in one commit.
 
 ```bash
 # 1. Create edit
-EDIT_ID=$(gpd publish edit create --package com.example.app | jq -r '.id')
+EDIT_ID=$(gpd publish edit create --package com.example.app | jq -r '.data.editId')
 
 # 2. Upload build without auto-commit
 gpd publish upload app.aab --package com.example.app --edit-id $EDIT_ID --no-auto-commit

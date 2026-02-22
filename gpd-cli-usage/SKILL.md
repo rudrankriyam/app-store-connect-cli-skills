@@ -16,7 +16,7 @@ Use this skill when you need to run or design `gpd` commands for Google Play Dev
 ## Flag conventions
 - Use explicit long flags (for example: `--package`, `--track`, `--status`).
 - No interactive prompts; destructive operations require `--confirm`.
-- Use `--paginate` when the user wants all pages.
+- Use `--all` when the user wants all pages.
 
 ## Output formats
 - Default output is minified JSON.
