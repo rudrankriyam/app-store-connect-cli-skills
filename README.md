@@ -150,6 +150,16 @@ Archive, export, and notarize macOS apps with Developer ID signing.
 - You want the full flow: archive → Developer ID export → zip → notarize → staple
 - You're troubleshooting Developer ID signing or trust chain issues
 
+### asc-crash-triage
+
+Triage TestFlight crashes, beta feedback, and performance diagnostics.
+
+**Use when:**
+- You want to review recent TestFlight crash reports
+- You need a crash summary grouped by signature, device, and build
+- You want to check beta tester feedback and screenshots
+- You need performance diagnostics (hangs, disk writes, launches) for a build
+
 ## Installation
 
 Install this skill pack:
