@@ -160,6 +160,15 @@ Triage TestFlight crashes, beta feedback, and performance diagnostics.
 - You want to check beta tester feedback and screenshots
 - You need performance diagnostics (hangs, disk writes, launches) for a build
 
+### asc-wall-submit
+
+Submit or update an app entry in the App-Store-Connect-CLI Wall of Apps using the existing generate-and-PR workflow.
+
+**Use when:**
+- You want to add your app to the Wall of Apps
+- You want to update an existing Wall entry
+- You want the exact `make generate app` + PR submission flow
+
 ## Installation
 
 Install this skill pack:
