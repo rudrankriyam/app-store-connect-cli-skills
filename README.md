@@ -141,6 +141,15 @@ Bulk-localize subscription and IAP display names across all App Store locales.
 - You need to fill in missing subscription/group/IAP localizations
 - You're tired of clicking through each locale in App Store Connect manually
 
+### asc-revenuecat-catalog-sync
+
+Reconcile App Store Connect subscriptions/IAP with RevenueCat products, entitlements, offerings, and packages.
+
+**Use when:**
+- You want to sync ASC product catalogs to RevenueCat
+- You need to create missing ASC subscriptions/IAPs before mapping them
+- You want an audit-first workflow with explicit apply confirmation
+
 ### asc-notarization
 
 Archive, export, and notarize macOS apps with Developer ID signing.
