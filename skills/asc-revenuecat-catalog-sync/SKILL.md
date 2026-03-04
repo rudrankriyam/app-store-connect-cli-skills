@@ -16,6 +16,7 @@ Use this skill to keep App Store Connect (ASC) and RevenueCat aligned, including
 ## Preconditions
 - `asc` authentication is configured (`asc auth login` or `ASC_*` env vars).
 - RevenueCat MCP server is configured and authenticated.
+- In Cursor and VS Code, OAuth auth is available for RevenueCat MCP. API key auth is also supported.
 - You know:
   - ASC app ID (`APP_ID`)
   - RevenueCat `project_id`
@@ -32,6 +33,10 @@ Use this skill to keep App Store Connect (ASC) and RevenueCat aligned, including
 - Primary cross-system key: ASC `productId` == RevenueCat `store_identifier`.
 - Keep `productId` stable once products are live.
 - Do not use display names as unique identifiers.
+
+## Scope boundary
+- RevenueCat MCP configures RevenueCat resources; it does not create App Store Connect products directly.
+- Use `asc` commands to create missing ASC subscription groups, subscriptions, and IAPs before RevenueCat mapping.
 
 ## Modes
 
@@ -181,3 +186,7 @@ Failures:
 - Accidentally assigning consumables to entitlements.
 - Skipping the post-create ASC re-read step.
 - Missing offering/package verification after product creation.
+
+## Additional resources
+- Workflow examples: [examples.md](examples.md)
+- Source references: [references.md](references.md)
