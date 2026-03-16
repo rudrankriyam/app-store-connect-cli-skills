@@ -6,6 +6,14 @@ This is a community-maintained, unofficial skill pack and is not affiliated with
 
 Skills follow the Agent Skills format.
 
+## Installation
+
+Install this skill pack:
+
+```bash
+npx skills add rudrankriyam/app-store-connect-cli-skills
+```
+
 ## Available Skills
 
 ### asc-cli-usage
@@ -320,14 +328,6 @@ Submit or update an app entry in the App-Store-Connect-CLI Wall of Apps using `a
 
 ```bash
 Submit app 1234567890 to the Wall of Apps using the built-in asc apps wall submit flow.
-```
-
-## Installation
-
-Install this skill pack:
-
-```bash
-npx skills add rudrankriyam/app-store-connect-cli-skills
 ```
 
 ## Usage
