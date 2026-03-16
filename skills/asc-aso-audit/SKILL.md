@@ -1,6 +1,6 @@
 ---
 name: asc-aso-audit
-description: Run an offline ASO audit on pulled App Store metadata and surface keyword gaps using Astro MCP. Use after pulling metadata with asc migrate export or asc localizations download.
+description: Run an offline ASO audit on canonical App Store metadata under `./metadata` and surface keyword gaps using Astro MCP. Use after pulling metadata with `asc metadata pull`.
 ---
 
 # asc ASO audit
@@ -9,7 +9,8 @@ Run a two-phase ASO audit: offline checks against local metadata files, then key
 
 ## Preconditions
 
-- Metadata pulled locally via `asc migrate export` or `asc localizations download`.
+- Metadata pulled locally into canonical files via `asc metadata pull --app "APP_ID" --version "1.2.3" --dir "./metadata"`.
+- If metadata came from `asc migrate export` or `asc localizations download`, normalize it into the canonical `./metadata` layout before running this skill.
 - For Astro gap analysis: app tracked in Astro MCP (optional — offline checks run without it).
 
 ## Before You Start
@@ -22,7 +23,7 @@ Run a two-phase ASO audit: offline checks against local metadata files, then key
 
 - **App-info fields** (`subtitle`): `metadata/app-info/{locale}.json`
 - **Version fields** (`keywords`, `description`, `whatsNew`): `metadata/version/{latest-version}/{locale}.json`
-- **App name**: May not be present in exported metadata. If `name` is missing from the app-info JSON, fetch it via `asc app-infos list` or ask the user. Do not flag it as a missing-field error.
+- **App name**: May not be present in exported metadata. If `name` is missing from the app-info JSON, fetch it via `asc apps info list` or ask the user. Do not flag it as a missing-field error.
 
 ## Phase 1: Offline Checks
 
@@ -194,6 +195,10 @@ Present results as a single audit report. The report covers only the latest vers
 
 - Offline checks work without any network access — they read local files only.
 - Astro gap analysis is additive — the audit is useful even without it.
-- Run this skill after `asc migrate export` or `asc localizations download` to ensure metadata is current.
+- Run this skill after `asc metadata pull` to ensure canonical metadata files are current.
+- For keyword-only follow-up after the audit, prefer the canonical keyword workflow:
+  - `asc metadata keywords diff --app "APP_ID" --version "1.2.3" --dir "./metadata"`
+  - `asc metadata keywords apply --app "APP_ID" --version "1.2.3" --dir "./metadata" --confirm`
+  - `asc metadata keywords sync --app "APP_ID" --version "1.2.3" --dir "./metadata" --input "./keywords.csv"` when importing external keyword research
 - After making changes, re-run the audit to verify fixes.
 - The Field Utilization table includes promotional text for completeness, but no check validates its content (it is not indexed by Apple).

@@ -1,6 +1,6 @@
 ---
 name: asc-whats-new-writer
-description: Generate engaging, localized App Store release notes (What's New) from git log, bullet points, or free text. Optionally pairs with promotional text updates. Use when preparing release notes for an App Store submission.
+description: Generate engaging, localized App Store release notes (What's New) from git log, bullet points, or free text using canonical metadata under `./metadata`. Optionally pairs with promotional text updates.
 ---
 
 # asc What's New Writer
@@ -9,7 +9,7 @@ Generate engaging, localized release notes from flexible input. Optionally pair 
 
 ## Preconditions
 
-- Metadata pulled locally via `asc migrate export` or `asc localizations download` (for keyword reading). OR: user provides keywords manually.
+- Metadata pulled locally into canonical files via `asc metadata pull --app "APP_ID" --version "1.2.3" --dir "./metadata"`. OR: user provides keywords manually.
 - Auth configured for upload (`asc auth login` or `ASC_*` env vars).
 - The **primary locale** is `en-US` unless the user specifies otherwise.
 
@@ -80,6 +80,7 @@ The first ~170 characters are the only visible part before "more." Lead with the
 ### Step 4: Echo Keywords for Conversion
 
 1. Read `keywords` from `metadata/version/{latest}/{primary-locale}.json`
+   - These canonical files are also what `asc metadata keywords ...` reads and writes.
 2. If the field is empty or missing, skip this step
 3. Identify keywords relevant to the changes being described
 4. Weave them naturally into the notes — never force or stuff
@@ -148,14 +149,15 @@ Do not upload without user confirmation.
 Upload via `asc` (verify exact syntax with `asc --help`):
 
 ```bash
-# Individual locale
-asc app-info set --app "APP_ID" --locale "en-US" --whats-new "Your release notes here"
+# Individual locale direct update
+asc apps info edit --app "APP_ID" --version-id "VERSION_ID" --locale "en-US" --whats-new "Your release notes here"
 
-# Bulk via .strings files
-asc localizations upload --version "VERSION_ID" --path "./localizations"
+# Bulk canonical-metadata push after writing ./metadata/version/<version>/<locale>.json
+asc metadata push --app "APP_ID" --version "1.2.3" --dir "./metadata" --dry-run
+asc metadata push --app "APP_ID" --version "1.2.3" --dir "./metadata"
 ```
 
-If promotional text was drafted, upload it separately (no app submission required).
+If promotional text was drafted, either include `--promotional-text "..."` in the direct update command or write `promotionalText` into the canonical JSON before `asc metadata push`.
 
 ### Step 4: Handle Failures
 
@@ -168,6 +170,7 @@ On partial upload failure:
 - **Keywords:** `metadata/version/{latest-version}/{locale}.json` → `keywords` field
 - **Current What's New:** `metadata/version/{latest-version}/{locale}.json` → `whatsNew` field
 - **Latest version:** highest semver directory under `metadata/version/`
+- The canonical `./metadata` tree is what `asc metadata pull`, `asc metadata push`, and `asc metadata keywords ...` operate on.
 - Follows the same metadata resolution conventions as `asc-aso-audit`
 
 ## Notes
@@ -179,3 +182,4 @@ On partial upload failure:
 - Ideal update cadence: every 2-4 weeks.
 - For full metadata translation (all fields), use `asc-localize-metadata` instead.
 - For keyword research and optimization, use `asc-aso-audit` first.
+- If the local keyword field is stale before drafting, refresh it with `asc metadata pull` or inspect planned keyword changes with `asc metadata keywords diff`.
