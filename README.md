@@ -6,16 +6,6 @@ This is a community-maintained, unofficial skill pack and is not affiliated with
 
 Skills follow the Agent Skills format.
 
-## Google Play Skills Moved
-
-Google Play skills now live in the dedicated [`rudrankriyam/gpd-cli-skills`](https://github.com/rudrankriyam/gpd-cli-skills) repository.
-
-Install the Play-focused skill pack with:
-
-```bash
-npx skills add rudrankriyam/gpd-cli-skills
-```
-
 ## Available Skills
 
 ### asc-cli-usage
