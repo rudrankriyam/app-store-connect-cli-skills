@@ -1,6 +1,6 @@
 ---
 name: asc-release-flow
-description: Determine whether an app is ready to submit, then drive the App Store release flow with asc, including first-time submission fixes for availability, subscriptions, and App Privacy.
+description: Determine whether an app is ready to submit, then drive the App Store release flow with asc, including first-time submission fixes for availability, in-app purchases, subscriptions, Game Center, and App Privacy.
 ---
 
 # Release flow (readiness-first)
@@ -21,9 +21,9 @@ When using this skill, answer readiness questions in this order:
 4. What exact command should run next?
 
 Group blockers like this:
-- API-fixable: build validity, metadata, screenshots, review details, content rights, encryption, version/build attachment.
+- API-fixable: build validity, metadata, screenshots, review details, content rights, encryption, version/build attachment, IAP readiness, Game Center version and review-submission setup.
 - Web-session-fixable: initial app availability bootstrap, first-review subscription attachment, App Privacy publish state.
-- Manual fallback: only when the user does not want to use experimental web-session commands or Apple UI behavior has changed.
+- Manual fallback: first-time IAP selection from the app-version screen when no CLI attach flow exists, or any flow the user does not want to run through experimental web-session commands.
 
 ## Canonical path
 
@@ -58,7 +58,21 @@ This is the best single-command rehearsal for:
 
 Add `--strict-validate` when you want warnings treated as blockers.
 
-### 3. Actual submit
+### 3. Deep API readiness audit
+Run this when the user needs a fuller version-level checklist than `submit preflight`:
+
+```bash
+asc validate --app "APP_ID" --version "1.2.3" --platform IOS --output table
+```
+
+If the app sells digital goods, also run:
+
+```bash
+asc validate iap --app "APP_ID" --output table
+asc validate subscriptions --app "APP_ID" --output table
+```
+
+### 4. Actual submit
 When the dry run looks clean:
 
 ```bash
@@ -139,7 +153,71 @@ For later reviews, use the normal submission path:
 asc subscriptions review submit --subscription-id "SUB_ID" --confirm
 ```
 
-### 3. App Privacy is still unpublished
+If review artifacts are missing, upload them before submission:
+
+```bash
+asc subscriptions review screenshots create --subscription-id "SUB_ID" --file "./screenshot.png"
+asc subscriptions images create --subscription-id "SUB_ID" --file "./image.png"
+```
+
+Also make sure the app’s privacy policy URL is populated when the app sells subscriptions.
+
+### 3. In-App Purchases need review readiness or first-version inclusion
+For apps with one-time purchases, consumables, or non-consumables, check readiness explicitly:
+
+```bash
+asc validate iap --app "APP_ID" --output table
+```
+
+If the IAP is missing its App Review screenshot:
+
+```bash
+asc iap review-screenshots create --iap-id "IAP_ID" --file "./review.png"
+```
+
+For IAPs on a published app, submit them directly:
+
+```bash
+asc iap submit --iap-id "IAP_ID" --confirm
+```
+
+If this is the first IAP for the app, or the first time adding a new IAP type, Apple requires it to be included with a new app version. Current `asc` commands can validate and submit published-app IAPs, but there is no equivalent first-review attach flow like the subscription web commands yet. In that case:
+- prepare the IAP with `asc validate iap`, pricing, localization, and review screenshot data first
+- then select the IAP from the app version’s “In-App Purchases and Subscriptions” section in App Store Connect before submitting the app version
+
+Also make sure the app’s privacy policy URL is populated when the app sells IAPs.
+
+### 4. Game Center is enabled but the app version or review submission is incomplete
+If the app uses Game Center, make sure the App Store version is Game Center-enabled:
+
+```bash
+asc game-center app-versions list --app "APP_ID"
+asc game-center app-versions create --app-store-version-id "VERSION_ID"
+```
+
+If you are adding Game Center components for the first time, include them in the same submission as the app version. Resolve component version IDs first:
+
+```bash
+asc game-center achievements v2 versions list --achievement-id "ACH_ID"
+asc game-center leaderboards v2 versions list --leaderboard-id "LEADERBOARD_ID"
+asc game-center challenges versions list --challenge-id "CHALLENGE_ID"
+asc game-center activities versions list --activity-id "ACTIVITY_ID"
+```
+
+Then use the review-submission flow so you can add the app version and the Game Center component versions to the same submission:
+
+```bash
+asc review submissions-create --app "APP_ID" --platform IOS
+asc review items-add --submission "SUBMISSION_ID" --item-type appStoreVersions --item-id "VERSION_ID"
+asc review items-add --submission "SUBMISSION_ID" --item-type gameCenterLeaderboardVersions --item-id "GC_LEADERBOARD_VERSION_ID"
+asc review submissions-submit --id "SUBMISSION_ID" --confirm
+```
+
+`asc review items-add` also supports `gameCenterAchievementVersions`, `gameCenterActivityVersions`, `gameCenterChallengeVersions`, and `gameCenterLeaderboardSetVersions`.
+
+If Game Center component versions need to ship with the app version, prefer the explicit `asc review submissions-*` flow over `asc release run --confirm`, because you need a chance to add all submission items before final submit.
+
+### 5. App Privacy is still unpublished
 The public API can warn about App Privacy readiness but cannot fully verify publish state.
 
 If `asc submit preflight`, `asc validate`, or `asc release run` surfaces an App Privacy advisory, reconcile it with:
@@ -157,7 +235,7 @@ If the user does not want the experimental web-session flow, confirm App Privacy
 https://appstoreconnect.apple.com/apps/APP_ID/appPrivacy
 ```
 
-### 4. Review details are incomplete
+### 6. Review details are incomplete
 Check whether the version already has review details:
 
 ```bash
@@ -187,13 +265,17 @@ Only set `--demo-account-required=true` when App Review truly needs demo credent
 ## Practical readiness checklist
 An app is effectively ready to submit when:
 - `asc submit preflight --app "APP_ID" --version "VERSION"` reports no blocking issues
+- `asc validate --app "APP_ID" --version "VERSION"` is clean or only contains understood non-blocking warnings
 - `asc release run ... --dry-run` produces the expected plan
 - the build is `VALID` and attached to the target version
 - metadata, screenshots, and localizations are complete
 - content rights and encryption requirements are resolved
 - review details are present
 - app availability exists
+- if the app has IAPs or subscriptions, the privacy policy URL is present
+- if the app has IAPs, they have localization/pricing/review screenshots and first-time IAPs are selected with the app version
 - subscriptions, if any, are attached for first review or already submitted through the supported review path
+- if the app uses Game Center, the app version is Game Center-enabled and any required Game Center component versions are in the same review submission
 - any App Privacy advisory has been resolved through `asc web privacy ...` or manual confirmation
 
 ## Lower-level fallback
@@ -206,6 +288,15 @@ asc submit create --app "APP_ID" --version "1.2.3" --build "BUILD_ID" --confirm
 asc status --app "APP_ID"
 ```
 
+If the submission needs multiple review items, such as Game Center component versions, use the review-submission API directly instead:
+
+```bash
+asc review submissions-create --app "APP_ID" --platform IOS
+asc review items-add --submission "SUBMISSION_ID" --item-type appStoreVersions --item-id "VERSION_ID"
+asc review items-add --submission "SUBMISSION_ID" --item-type gameCenterChallengeVersions --item-id "GC_CHALLENGE_VERSION_ID"
+asc review submissions-submit --id "SUBMISSION_ID" --confirm
+```
+
 ## Platform notes
 - Use `--platform MAC_OS`, `TV_OS`, or `VISION_OS` as needed.
 - For macOS, upload the `.pkg` separately, then use the same readiness and submission flow.
@@ -214,5 +305,8 @@ asc status --app "APP_ID"
 ## Notes
 - `asc release run --dry-run` is the closest thing to a one-command answer for "will this release flow work?"
 - `asc submit preflight` is the fastest first pass.
+- `asc validate` is the deeper API-side checklist for version readiness.
 - Web-session commands are experimental and should be presented as optional escape hatches when the public API cannot complete the first-time flow.
+- First-review subscriptions have a concrete CLI attach path; first-review IAP selection still may require the App Store Connect version UI.
+- Game Center can require explicit review-submission item management when components must ride with the app version.
 - If the user asks "why did submission fail?" map the failure back into the three buckets above: API-fixable, web-session-fixable, or manual fallback.
