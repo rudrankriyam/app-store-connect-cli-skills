@@ -39,24 +39,23 @@ asc localizations upload --app "APP_ID" --type app-info --app-info "APP_INFO_ID"
 
 **Note:** If you get "multiple app infos found", you must specify `--app-info` with the correct ID.
 
-## Legacy Metadata Format Workflow
+## Legacy Fastlane Metadata Workflow
 
 ### Export current state
 ```bash
-asc migrate export --app "APP_ID" --output "./metadata"
+asc migrate export --app "APP_ID" --version-id "VERSION_ID" --output-dir "./fastlane"
 ```
 
 ### Validate local files
 ```bash
-# Use --help to discover flags for your metadata directory
-asc migrate validate --help
+asc migrate validate --fastlane-dir "./fastlane"
 ```
 This checks character limits and required fields.
 
 ### Import updates
 ```bash
-# Use --help to discover flags for your metadata directory
-asc migrate import --help
+asc migrate import --app "APP_ID" --version-id "VERSION_ID" --fastlane-dir "./fastlane" --dry-run
+asc migrate import --app "APP_ID" --version-id "VERSION_ID" --fastlane-dir "./fastlane"
 ```
 
 ## Quick Field Updates
@@ -140,10 +139,12 @@ asc localizations list --version "VERSION_ID" --output table
 | What's New | 4000 |
 | Promotional Text | 170 |
 
-Use `asc migrate validate` to check limits before upload.
+Use `asc metadata validate --dir "./metadata"` for canonical metadata trees.
+Use `asc migrate validate --fastlane-dir "./fastlane"` for legacy fastlane-format metadata.
 
 ## Notes
 - Version localizations and app info localizations are different; use the right command and `--type` flag.
-- `asc migrate validate` enforces character limits before upload.
+- Use `asc metadata validate --dir "./metadata"` for canonical metadata validation.
+- Use `asc migrate validate --fastlane-dir "./fastlane"` only for legacy fastlane-format metadata.
 - Use `asc localizations list` to confirm available locales and IDs.
 - Privacy Policy URL is in app info localizations, not version localizations.

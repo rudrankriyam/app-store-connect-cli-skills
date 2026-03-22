@@ -132,8 +132,8 @@ If the subscription was newly created, you can also use `asc subscriptions setup
 If you need to explicitly enable territories for an existing subscription, use the pricing availability family.
 
 ```bash
-asc subscriptions pricing availability set --subscription-id "SUB_ID" --territories "USA,CAN,IND,BRA"
-asc subscriptions pricing availability get --subscription-id "SUB_ID"
+asc subscriptions pricing availability edit --subscription-id "SUB_ID" --territories "USA,CAN,IND,BRA"
+asc subscriptions pricing availability view --subscription-id "SUB_ID"
 ```
 
 ## IAP PPP workflow

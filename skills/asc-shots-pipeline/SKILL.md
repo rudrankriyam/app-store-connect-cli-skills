@@ -1,6 +1,6 @@
 ---
 name: asc-shots-pipeline
-description: Orchestrate iOS screenshot automation with xcodebuild/simctl for build-run, AXe for UI actions, JSON settings and plan files, Go-based framing (`asc screenshots frame`), and screenshot upload (`asc screenshots upload`). Use when users ask for automated screenshot capture, AXe-driven simulator flows, frame composition, or screenshot-to-upload pipelines.
+description: Orchestrate iOS screenshot automation with xcodebuild/simctl for build-run, AXe for UI actions, JSON settings and plan files, Koubou-based framing (`asc screenshots frame`), and screenshot upload (`asc screenshots upload`). Use when users ask for automated screenshot capture, AXe-driven simulator flows, frame composition, or screenshot-to-upload pipelines.
 ---
 
 # asc screenshots pipeline (xcodebuild -> AXe -> frame -> asc)
@@ -11,7 +11,7 @@ Use this skill for agent-driven screenshot workflows where the app is built and 
 - Implemented now: build/run, AXe plan capture, frame composition, and upload.
 - Device discovery is built-in via `asc screenshots list-frame-devices`.
 - Local screenshot automation commands are experimental in asc cli.
-- Framing is pinned to Koubou `0.14.0` for deterministic output.
+- Framing is pinned to Koubou `0.18.0` for deterministic output.
 - Feedback/issues: https://github.com/rudrankriyam/App-Store-Connect-CLI/issues/new/choose
 
 ## Defaults
@@ -113,12 +113,14 @@ Minimal `.asc/screenshots.json` example:
 
 ## 4) Frame screenshots with `asc screenshots frame`
 
-asc cli pins framing to Koubou `0.14.0`.
+asc cli pins framing to Koubou `0.18.0`.
 Install and verify before running framing steps:
 
 ```bash
-pip install koubou==0.14.0
-kou --version  # expect 0.14.0
+pip install koubou==0.18.0
+kou --version  # expect 0.18.0
+# First run with network access may also need:
+kou setup-frames
 ```
 
 List supported frame device values first:
@@ -180,7 +182,8 @@ asc screenshots list --version-localization "LOC_ID" --output table
 - Ensure screenshot files exist before upload.
 - Use explicit long flags (`--app`, `--output`, `--version-localization`, etc.).
 - Treat screenshot-local automation as experimental and call it out in user-facing handoff notes.
-- If framing fails with a version error, re-install pinned Koubou: `pip install koubou==0.14.0`.
+- If framing fails with a version error, re-install pinned Koubou: `pip install koubou==0.18.0`.
+- If framing fails because device frames are missing, run `kou setup-frames` once with network access.
 
 ## 6) Multi-locale capture (optional)
 
