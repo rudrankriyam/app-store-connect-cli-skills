@@ -32,6 +32,7 @@ Use this skill when you need to get a new build into TestFlight or submit to the
    - `asc builds add-groups --build <BUILD_ID> --group <GROUP_ID>[,<GROUP_ID>]`
 4. App Store attach + submit:
    - `asc versions attach-build --version-id <VERSION_ID> --build <BUILD_ID>`
+   - `asc submit preflight --app <APP_ID> --version <VERSION> [--platform <PLATFORM>]`
    - `asc submit create --app <APP_ID> --version <VERSION> --build <BUILD_ID> --confirm`
 5. Check or cancel submission:
    - `asc submit status --id <SUBMISSION_ID>` or `--version-id <VERSION_ID>`
@@ -103,10 +104,13 @@ Before submitting, verify:
 - [ ] Copyright field populated
 - [ ] All localizations complete
 - [ ] Screenshots present
+- [ ] App Privacy has been reviewed and published manually in App Store Connect
 
 See `asc-submission-health` skill for detailed preflight checks.
 
 ## Notes
 - Always use `--help` to verify flags for the exact command.
+- `asc submit preflight`, `asc validate`, and `asc release run` can surface App Privacy advisories even when required checks pass.
+- App Privacy publish state is not fully verifiable via the public API, so confirm it manually before final submission.
 - Use `--output table` / `--output markdown` for human-readable output; default is JSON.
 - macOS builds require `ITSAppUsesNonExemptEncryption` in Info.plist to avoid encryption issues.

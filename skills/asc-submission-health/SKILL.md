@@ -86,6 +86,21 @@ asc apps info list --app "APP_ID"
 asc localizations list --app "APP_ID" --type app-info --app-info "APP_INFO_ID"
 ```
 
+### 8. App Privacy Manual Check
+`asc` can warn about App Privacy readiness, but the public App Store Connect API
+cannot verify whether App Privacy is fully published. Before final submission:
+
+```bash
+asc submit preflight --app "APP_ID" --version "1.2.3" --platform IOS
+asc validate --app "APP_ID" --version-id "VERSION_ID" --platform IOS
+```
+
+If either command reports an App Privacy advisory, confirm it manually in App Store Connect:
+
+```text
+https://appstoreconnect.apple.com/apps/APP_ID/appPrivacy
+```
+
 ## Submit
 
 ### Using Review Submissions API (Recommended)
@@ -105,6 +120,7 @@ asc review submissions-submit --id "SUBMISSION_ID" --confirm
 
 ### Using Submit Command
 ```bash
+asc submit preflight --app "APP_ID" --version "1.2.3" --platform IOS
 asc submit create --app "APP_ID" --version "1.2.3" --build "BUILD_ID" --confirm
 ```
 Use `--platform` when multiple platforms exist.
@@ -138,6 +154,7 @@ Check:
 3. Content rights declaration set
 4. All localizations complete
 5. Screenshots present for all locales
+6. App Privacy has been reviewed and published in App Store Connect
 
 ### "Export compliance must be approved"
 The build has `usesNonExemptEncryption: true`. Either:
@@ -152,5 +169,7 @@ asc apps info list --app "APP_ID"
 
 ## Notes
 - `asc submit create` uses the new reviewSubmissions API automatically.
+- `asc submit preflight` can return non-blocking advisories; review them before submitting.
+- App Privacy publish state is not verifiable via the public API, so always confirm it manually in App Store Connect.
 - Use `--output table` when you want human-readable status.
 - macOS submissions follow the same process but use `--platform MAC_OS`.
