@@ -144,7 +144,5 @@ Use `asc migrate validate --fastlane-dir "./fastlane"` for legacy fastlane-forma
 
 ## Notes
 - Version localizations and app info localizations are different; use the right command and `--type` flag.
-- Use `asc metadata validate --dir "./metadata"` for canonical metadata validation.
-- Use `asc migrate validate --fastlane-dir "./fastlane"` only for legacy fastlane-format metadata.
 - Use `asc localizations list` to confirm available locales and IDs.
 - Privacy Policy URL is in app info localizations, not version localizations.
