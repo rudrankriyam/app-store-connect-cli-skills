@@ -1,6 +1,6 @@
 ---
 name: asc-signing-setup
-description: Set up bundle IDs, capabilities, signing certificates, and provisioning profiles with the asc cli. Use when onboarding a new app or rotating signing assets.
+description: Set up bundle IDs, capabilities, signing certificates, provisioning profiles, and encrypted signing sync with the asc cli. Use when onboarding a new app, rotating signing assets, or sharing them across a team.
 ---
 
 # asc signing setup
@@ -36,6 +36,29 @@ Use this skill when you need to create or renew signing assets for iOS/macOS app
   - `asc certificates revoke --id "CERT_ID" --confirm`
 - Delete old profiles:
   - `asc profiles delete --id "PROFILE_ID" --confirm`
+
+## Shared team storage with `asc signing sync`
+Use this when you want a lightweight, non-interactive alternative to fastlane match for encrypted git-backed certificate/profile storage.
+
+```bash
+# Push current ASC signing assets into an encrypted git repo
+asc signing sync push \
+  --bundle-id "com.example.app" \
+  --profile-type IOS_APP_STORE \
+  --repo "git@github.com:team/certs.git" \
+  --password "$MATCH_PASSWORD"
+
+# Pull and decrypt them into a local directory
+asc signing sync pull \
+  --repo "git@github.com:team/certs.git" \
+  --password "$MATCH_PASSWORD" \
+  --output-dir "./signing"
+```
+
+Notes:
+- `--password` falls back to `ASC_MATCH_PASSWORD`.
+- The encrypted repo follows a familiar match-style git layout for certs and profiles.
+- `pull` writes files to disk; keychain import or profile installation is a separate step.
 
 ## Notes
 - Always check `--help` for the exact enum values (certificate types, profile types).

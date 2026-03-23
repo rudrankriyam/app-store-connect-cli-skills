@@ -1,6 +1,6 @@
 ---
 name: asc-xcode-build
-description: Build, archive, and export iOS/macOS apps with xcodebuild before uploading to App Store Connect. Use when you need to create an IPA or PKG for upload.
+description: Build, archive, export, and manage Xcode version/build numbers with asc and xcodebuild before uploading to App Store Connect. Use when you need to create an IPA or PKG for upload.
 ---
 
 # Xcode Build and Export
@@ -10,6 +10,21 @@ Use this skill when you need to build an app from source and prepare it for uplo
 ## Preconditions
 - Xcode installed and command line tools configured
 - Valid signing identity and provisioning profiles (or automatic signing enabled)
+
+## Manage version and build numbers with `asc`
+Before archiving, prefer `asc xcode version ...` over manual `pbxproj` edits when you need to inspect or bump app versions.
+
+```bash
+asc xcode version view
+asc xcode version edit --version "1.3.0" --build-number "42"
+asc xcode version bump --type build
+asc xcode version bump --type patch
+```
+
+Notes:
+- Use `--project-dir "./MyApp"` when you are not running from the project root.
+- Use `--target "App"` for deterministic reads in multi-target projects.
+- These commands support both legacy `agvtool` projects and modern `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` setups.
 
 ## iOS Build Flow
 
@@ -109,7 +124,7 @@ macOS requires ICNS format icons with all sizes:
 - 16x16, 32x32, 128x128, 256x256, 512x512 (1x and 2x)
 
 ### CFBundleVersion too low
-The build number must be higher than any previously uploaded build. Increment `CURRENT_PROJECT_VERSION` and rebuild.
+The build number must be higher than any previously uploaded build. Increment it with `asc xcode version bump --type build` (or `asc xcode version edit --build-number "NEXT"`) and rebuild.
 
 ## Notes
 - Always clean before archive for release builds

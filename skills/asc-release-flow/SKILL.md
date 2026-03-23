@@ -11,7 +11,7 @@ Use this skill when the real question is "Can my app be ready to submit?" and th
 - Ensure credentials are set (`asc auth login` or `ASC_*` env vars).
 - Resolve app ID, version string, and build ID up front.
 - For lower-level or first-time flows, also be ready to resolve `VERSION_ID`, `SUBMISSION_ID`, `DETAIL_ID`, `GROUP_ID`, `SUB_ID`, `IAP_ID`, and related resource IDs. Use `asc-id-resolver` when needed.
-- Have a metadata directory ready if you plan to use `asc release run`.
+- Have a metadata directory ready if you plan to use `asc release stage` or `asc release run`.
 - If you use experimental web-session commands, use a user-owned Apple Account session and treat those commands as optional escape hatches, not the default path.
 
 ## How to answer
@@ -22,8 +22,8 @@ When using this skill, answer readiness questions in this order:
 4. What exact command should run next?
 
 Group blockers like this:
-- API-fixable: build validity, metadata, screenshots, review details, content rights, encryption, version/build attachment, IAP readiness, Game Center version and review-submission setup.
-- Web-session-fixable: initial app availability bootstrap, first-review subscription attachment, App Privacy publish state.
+- API-fixable: build validity, metadata, screenshots, review details, content rights, encryption, version/build attachment, app availability bootstrap, IAP readiness, Game Center version and review-submission setup.
+- Web-session-fixable: first-review subscription attachment, App Privacy publish state.
 - Manual fallback: first-time IAP selection from the app-version screen when no CLI attach flow exists, or any flow the user does not want to run through experimental web-session commands.
 
 ## Canonical path
@@ -37,7 +37,21 @@ asc submit preflight --app "APP_ID" --version "1.2.3" --platform IOS
 
 This is the fastest high-signal readiness check and prints fix guidance without mutating anything.
 
-### 2. Full-pipeline dry run
+### 2. Real staging pass without submit
+Run this when the user wants the version prepared in App Store Connect but wants a manual checkpoint before creating a review submission:
+
+```bash
+asc release stage \
+  --app "APP_ID" \
+  --version "1.2.3" \
+  --build "BUILD_ID" \
+  --metadata-dir "./metadata/version/1.2.3" \
+  --confirm
+```
+
+Use `--copy-metadata-from "1.2.2"` instead of `--metadata-dir` when you want to carry metadata forward from an existing version. `asc release stage` requires exactly one metadata source and stops before submit.
+
+### 3. Full-pipeline dry run
 Run this when the user wants one command that approximates the whole release path:
 
 ```bash
@@ -59,7 +73,7 @@ This is the best single-command rehearsal for:
 
 Add `--strict-validate` when you want warnings treated as blockers.
 
-### 3. Deep API readiness audit
+### 4. Deep API readiness audit
 Run this when the user needs a fuller version-level checklist than `submit preflight`:
 
 ```bash
@@ -75,7 +89,11 @@ asc validate iap --app "APP_ID" --output table
 asc validate subscriptions --app "APP_ID" --output table
 ```
 
-### 4. Actual submit
+In `0.45.3+`, `asc validate subscriptions` expands `MISSING_METADATA` into per-subscription diagnostics. Use it to pinpoint missing review screenshots, promotional images, pricing or availability coverage, offer readiness, and app/build evidence before you retry submission or `attach-group`.
+
+When territory coverage is wrong, the newest diagnostics name the exact missing territories instead of only reporting count mismatches. Use `--output json --pretty` when you want machine-readable diagnostics.
+
+### 5. Actual submit
 When the dry run looks clean:
 
 ```bash
@@ -91,28 +109,29 @@ asc release run \
 
 ### 1. Initial app availability does not exist yet
 Symptoms:
-- `asc pricing availability get --app "APP_ID"` reports no availability
-- `asc pricing availability set ...` fails because it only updates existing availability
+- `asc pricing availability view --app "APP_ID"` reports no availability
+- `asc pricing availability edit ...` fails because it only updates existing availability
 
 Check:
 
 ```bash
-asc pricing availability get --app "APP_ID"
+asc pricing availability view --app "APP_ID"
 ```
 
-Bootstrap the first availability record with the web-session flow:
+Bootstrap the first availability record with the public API:
 
 ```bash
-asc web apps availability create \
+asc pricing availability create \
   --app "APP_ID" \
   --territory "USA,GBR" \
+  --available true \
   --available-in-new-territories true
 ```
 
 After bootstrap, use the normal API command for ongoing updates:
 
 ```bash
-asc pricing availability set \
+asc pricing availability edit \
   --app "APP_ID" \
   --territory "USA,GBR" \
   --available true \
@@ -125,6 +144,8 @@ For apps with subscriptions, check readiness explicitly:
 ```bash
 asc validate subscriptions --app "APP_ID" --output table
 ```
+
+If the validator shows `MISSING_METADATA`, read the row-level diagnostics literally. The newest CLI surfaces missing promotional images, review screenshots, pricing or availability coverage, offer readiness, and app/build evidence in one matrix, which is the quickest way to understand why first-review attach still fails.
 
 List current first-review subscription state:
 
@@ -140,6 +161,8 @@ asc web review subscriptions attach-group \
   --group-id "GROUP_ID" \
   --confirm
 ```
+
+If `attach-group` still returns `MISSING_METADATA`, fix the validator-reported prerequisites first. The most common misses are broad pricing coverage and a subscription promotional image.
 
 For one subscription instead of a whole group:
 
@@ -269,6 +292,7 @@ Only set `--demo-account-required=true` when App Review truly needs demo credent
 An app is effectively ready to submit when:
 - `asc submit preflight --app "APP_ID" --version "VERSION"` reports no blocking issues
 - `asc validate --app "APP_ID" --version "VERSION"` is clean or only contains understood non-blocking warnings
+- `asc release stage --confirm` successfully prepared the target version when you want a real pre-submit checkpoint
 - `asc release run ... --dry-run` produces the expected plan
 - the build is `VALID` and attached to the target version
 - metadata, screenshots, and localizations are complete
@@ -305,13 +329,16 @@ asc review submissions-submit --id "SUBMISSION_ID" --confirm
 ## Platform notes
 - Use `--platform MAC_OS`, `TV_OS`, or `VISION_OS` as needed.
 - For macOS, upload the `.pkg` separately, then use the same readiness and submission flow.
-- `asc publish testflight` is still the fastest TestFlight shortcut, but for App Store readiness prefer `asc submit preflight` and `asc release run`.
+- `asc publish testflight` is still the fastest TestFlight shortcut, but for App Store readiness prefer `asc submit preflight`, `asc release stage`, and `asc release run`.
 
 ## Notes
-- `asc release run --dry-run` is the closest thing to a one-command answer for "will this release flow work?"
+- `asc release stage --confirm` is the safest one-command way to prepare a version without submitting it.
+- `asc release run --dry-run` is the closest thing to a one-command answer for "will this full release flow work?"
 - `asc submit preflight` is the fastest first pass.
 - `asc validate` is the deeper API-side checklist for version readiness.
+- `asc validate subscriptions` now exposes much richer per-subscription diagnostics for `MISSING_METADATA` readiness failures.
 - Web-session commands are experimental and should be presented as optional escape hatches when the public API cannot complete the first-time flow.
+- Public `asc pricing availability create` now covers the first app-availability bootstrap case.
 - First-review subscriptions have a concrete CLI attach path; first-review IAP selection still may require the App Store Connect version UI.
 - Game Center can require explicit review-submission item management when components must ride with the app version.
 - If the user asks "why did submission fail?" map the failure back into the three buckets above: API-fixable, web-session-fixable, or manual fallback.

@@ -190,7 +190,7 @@ asc iap pricing schedules create --iap-id "IAP_ID" --base-territory "USA" --pric
 Use these when you are intentionally creating or replacing schedule entries. For deeper inspection:
 
 ```bash
-asc iap pricing schedules get --iap-id "IAP_ID"
+asc iap pricing schedules view --iap-id "IAP_ID"
 asc iap pricing schedules manual-prices --schedule-id "SCHEDULE_ID" --paginate
 asc iap pricing schedules automatic-prices --schedule-id "SCHEDULE_ID" --paginate
 ```

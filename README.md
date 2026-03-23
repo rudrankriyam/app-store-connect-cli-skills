@@ -18,7 +18,7 @@ npx skills add rudrankriyam/app-store-connect-cli-skills
 
 ### asc-cli-usage
 
-Guidance for running `asc` commands (flags, pagination, output, auth).
+Guidance for running `asc` commands (canonical verbs, flags, pagination, output, auth).
 
 **Use when:**
 - You need the correct `asc` command or flag combination
@@ -62,7 +62,7 @@ Create a new App Store Connect app for com.example.myapp with SKU MYAPP123 and p
 
 ### asc-xcode-build
 
-Build, archive, and export iOS/macOS apps with xcodebuild before uploading.
+Build, archive, export, and manage Xcode version/build numbers before uploading.
 
 **Use when:**
 - You need to create an IPA or PKG for upload
@@ -95,7 +95,7 @@ Build my iOS app, capture the home and settings screens in the simulator, frame 
 
 ### asc-release-flow
 
-Readiness-first App Store submission guidance, including first-time release blockers.
+Readiness-first App Store submission guidance, including `asc release stage`, `asc submit preflight`, and first-time release blockers.
 
 **Use when:**
 - You want the quickest answer to "can I submit this app now?"
@@ -110,7 +110,7 @@ Check whether version 2.4.0 of my iOS app is ready for App Store submission, sho
 
 ### asc-signing-setup
 
-Bundle IDs, capabilities, certificates, and provisioning profiles.
+Bundle IDs, capabilities, certificates, provisioning profiles, and encrypted signing sync.
 
 **Use when:**
 - You are onboarding a new app or bundle ID
@@ -198,7 +198,7 @@ Turn these release bullet points into polished What's New notes for en-US and lo
 
 ### asc-submission-health
 
-Preflight checks, submission, and review monitoring.
+Preflight checks, digital-goods readiness validation, submission, and review monitoring.
 
 **Use when:**
 - You want to reduce submission failures

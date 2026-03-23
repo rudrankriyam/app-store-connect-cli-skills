@@ -39,7 +39,7 @@ Requires a build ID. Resolve via `asc builds latest --app "APP_ID" --platform IO
 - List diagnostic signatures: `asc performance diagnostics list --build "BUILD_ID"`
 - Filter by type: `asc performance diagnostics list --build "BUILD_ID" --diagnostic-type "HANGS"`
   - Types: `HANGS`, `DISK_WRITES`, `LAUNCHES`
-- Get logs for a signature: `asc performance diagnostics get --id "SIGNATURE_ID"`
+- View logs for a signature: `asc performance diagnostics view --id "SIGNATURE_ID"`
 - Download all metrics: `asc performance download --build "BUILD_ID" --output ./metrics.json`
 
 ## Resolving IDs
