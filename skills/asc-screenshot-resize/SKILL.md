@@ -11,29 +11,38 @@ Use this skill to resize screenshots to the exact pixel dimensions required by A
 
 ### iPhone
 
-| Display Size | Portrait | Landscape |
-|---|---|---|
-| 6.9" (iPhone 16 Pro Max) | 1320 × 2868 | 2868 × 1320 |
-| 6.7" (iPhone 15 Plus, 14 Pro Max) | 1290 × 2796 | 2796 × 1290 |
-| 6.5" (iPhone 14 Plus, 11 Pro Max) | 1284 × 2778 | 2778 × 1284 |
-| 6.5" (iPhone 11 Pro Max, XS Max) | 1242 × 2688 | 2688 × 1242 |
-| 5.5" (iPhone 8 Plus) | 1242 × 2208 | 2208 × 1242 |
+| Display Size | Accepted Dimensions (portrait × landscape) |
+|---|---|
+| 6.9" | 1260 × 2736, 2736 × 1260, 1320 × 2868, 2868 × 1320, 1290 × 2796, 2796 × 1290 |
+| 6.5" | 1242 × 2688, 2688 × 1242, 1284 × 2778, 2778 × 1284 |
+| 6.3" | 1206 × 2622, 2622 × 1206, 1179 × 2556, 2556 × 1179 |
+| 6.1" | 1125 × 2436, 2436 × 1125, 1080 × 2340, 2340 × 1080, 1170 × 2532, 2532 × 1170 |
+| 5.5" | 1242 × 2208, 2208 × 1242 |
+| 4.7" | 750 × 1334, 1334 × 750 |
+| 4" | 640 × 1096, 640 × 1136, 1136 × 600, 1136 × 640 |
+| 3.5" | 640 × 920, 640 × 960, 960 × 600, 960 × 640 |
+
+**Note:** 6.9" accepts screenshots from 6.5", 6.7", and 6.9" devices. 6.3" accepts from 6.1" and 6.3". 6.1" accepts from 5.4", 5.8", and 6.1".
 
 ### iPad
 
-| Display Size | Portrait | Landscape |
-|---|---|---|
-| 13" (iPad Pro M4) | 2064 × 2752 | 2752 × 2064 |
-| 12.9" (iPad Pro 6th gen) | 2048 × 2732 | 2732 × 2048 |
-| 11" (iPad Pro M4) | 1668 × 2388 | 2388 × 1668 |
+| Display Size | Accepted Dimensions |
+|---|---|
+| 13" | 2064 × 2752, 2752 × 2064, 2048 × 2732, 2732 × 2048 |
+| 11" | 1668 × 2420, 2420 × 1668, 1668 × 2388, 2388 × 1668, 1640 × 2360, 2360 × 1640, 1488 × 2266, 2266 × 1488 |
+| iPad Pro 2nd gen 12.9" | 2048 × 2732, 2732 × 2048 |
+| 10.5" | 1668 × 2224, 2224 × 1668 |
+| 9.7" | 1536 × 2008, 1536 × 2048, 2048 × 1496, 2048 × 1536, 768 × 1004, 768 × 1024, 1024 × 748, 1024 × 768 |
 
 ### Apple Watch
 
-| Display Size | Dimensions |
+| Device | Dimensions |
 |---|---|
-| Ultra 2 (49mm) | 410 × 502 |
-| Series 10 (46mm) | 416 × 496 |
-| Series 10 (42mm) | 374 × 446 |
+| Ultra 3 (49mm) | 422 × 514, 410 × 502 |
+| Series 11 (46mm) | 416 × 496 |
+| Series 9 (45mm) | 396 × 484 |
+| Series 6 (44mm) | 368 × 448 |
+| Series 3 (42mm) | 312 × 390 |
 
 ### Mac
 
@@ -125,11 +134,12 @@ done
 
 ```bash
 mkdir -p appstore-screenshots
-sips -z 2868 1320 input.png --out appstore-screenshots/6.9-inch.png
-sips -z 2796 1290 input.png --out appstore-screenshots/6.7-inch.png
-sips -z 2778 1284 input.png --out appstore-screenshots/6.5-inch.png
-sips -z 2688 1242 input.png --out appstore-screenshots/6.5-inch-legacy.png
-sips -z 2208 1242 input.png --out appstore-screenshots/5.5-inch.png
+# iPhone
+sips -z 2868 1320 input.png --out appstore-screenshots/iphone-6.9.png
+sips -z 2778 1284 input.png --out appstore-screenshots/iphone-6.5.png
+sips -z 2622 1206 input.png --out appstore-screenshots/iphone-6.3.png
+sips -z 2532 1170 input.png --out appstore-screenshots/iphone-6.1.png
+sips -z 2208 1242 input.png --out appstore-screenshots/iphone-5.5.png
 ```
 
 ### 7. Verify output
