@@ -16,7 +16,7 @@ Use this skill to reduce review submission failures and monitor status.
 
 ### 1. Verify Build Status
 ```bash
-asc builds info --build "BUILD_ID"
+asc builds info --build-id "BUILD_ID"
 ```
 Check:
 - `processingState` is `VALID`

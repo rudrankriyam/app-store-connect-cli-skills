@@ -18,7 +18,7 @@ Use this skill to map names to IDs needed by other commands.
 
 ## Build ID
 - Latest build:
-  - `asc builds latest --app "APP_ID" --version "1.2.3" --platform IOS`
+  - `asc builds info --app "APP_ID" --latest --version "1.2.3" --platform IOS`
 - Recent builds:
   - `asc builds list --app "APP_ID" --sort -uploadedDate --limit 5`
 

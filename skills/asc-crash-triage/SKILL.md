@@ -34,7 +34,7 @@ List recent feedback (newest first):
 
 ## Performance diagnostics (hangs, disk writes, launches)
 
-Requires a build ID. Resolve via `asc builds latest --app "APP_ID" --platform IOS` or `asc builds list --app "APP_ID" --sort -uploadedDate --limit 5`.
+Requires a build ID. Resolve via `asc builds info --app "APP_ID" --latest --platform IOS` or `asc builds list --app "APP_ID" --sort -uploadedDate --limit 5`.
 
 - List diagnostic signatures: `asc performance diagnostics list --build "BUILD_ID"`
 - Filter by type: `asc performance diagnostics list --build "BUILD_ID" --diagnostic-type "HANGS"`
@@ -45,7 +45,7 @@ Requires a build ID. Resolve via `asc builds latest --app "APP_ID" --platform IO
 ## Resolving IDs
 
 - App ID from name: `asc apps list --name "AppName"` or `asc apps list --bundle-id "com.example.app"`
-- Latest build ID: `asc builds latest --app "APP_ID" --platform IOS`
+- Latest build ID: `asc builds info --app "APP_ID" --latest --platform IOS`
 - Recent builds: `asc builds list --app "APP_ID" --sort -uploadedDate --limit 5`
 - Set default: `export ASC_APP_ID="APP_ID"`
 

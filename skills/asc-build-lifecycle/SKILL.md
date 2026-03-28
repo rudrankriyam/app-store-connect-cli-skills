@@ -9,12 +9,14 @@ Use this skill to manage build state, processing, and retention.
 
 ## Find the right build
 - Latest build:
-  - `asc builds latest --app "APP_ID" --version "1.2.3" --platform IOS`
+  - `asc builds info --app "APP_ID" --latest --version "1.2.3" --platform IOS`
+- Next safe build number:
+  - `asc builds next-build-number --app "APP_ID" --version "1.2.3" --platform IOS`
 - Recent builds:
   - `asc builds list --app "APP_ID" --sort -uploadedDate --limit 10`
 
 ## Inspect processing state
-- `asc builds info --build "BUILD_ID"`
+- `asc builds info --build-id "BUILD_ID"`
 
 ## Distribution flows
 - Prefer end-to-end:
@@ -27,7 +29,7 @@ Use this skill to manage build state, processing, and retention.
 - Apply expiration:
   - `asc builds expire-all --app "APP_ID" --older-than 90d --confirm`
 - Single build:
-  - `asc builds expire --build "BUILD_ID" --confirm`
+  - `asc builds expire --build-id "BUILD_ID" --confirm`
 
 ## Notes
 - `asc builds upload` prepares upload operations only; use `asc publish` for end-to-end flows.

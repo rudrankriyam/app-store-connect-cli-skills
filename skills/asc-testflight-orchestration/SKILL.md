@@ -22,13 +22,13 @@ Use this skill when managing TestFlight testers, groups, and build distribution.
   - `asc testflight testers invite --app "APP_ID" --email "tester@example.com"`
 
 ## Distribute builds
-- `asc builds add-groups --build "BUILD_ID" --group "GROUP_ID"`
+- `asc builds add-groups --build-id "BUILD_ID" --group "GROUP_ID"`
 - Remove from group:
-  - `asc builds remove-groups --build "BUILD_ID" --group "GROUP_ID" --confirm`
+  - `asc builds remove-groups --build-id "BUILD_ID" --group "GROUP_ID" --confirm`
 
 ## What to Test notes
-- `asc builds test-notes create --build "BUILD_ID" --locale "en-US" --whats-new "Test instructions"`
-- `asc builds test-notes update --id "LOCALIZATION_ID" --whats-new "Updated notes"`
+- `asc builds test-notes create --build-id "BUILD_ID" --locale "en-US" --whats-new "Test instructions"`
+- `asc builds test-notes update --localization-id "LOCALIZATION_ID" --whats-new "Updated notes"`
 
 ## Notes
 - Use `--paginate` on large groups/tester lists.
