@@ -22,8 +22,8 @@ When using this skill, answer readiness questions in this order:
 4. What exact command should run next?
 
 Group blockers like this:
-- API-fixable: build validity, metadata, screenshots, review details, content rights, encryption, version/build attachment, app availability bootstrap, IAP readiness, Game Center version and review-submission setup.
-- Web-session-fixable: first-review subscription attachment, App Privacy publish state.
+- API-fixable: build validity, metadata, screenshots, review details, content rights, encryption, version/build attachment, IAP readiness, Game Center version and review-submission setup.
+- Web-session-fixable: initial app availability bootstrap, first-review subscription attachment, App Privacy publish state.
 - Manual fallback: first-time IAP selection from the app-version screen when no CLI attach flow exists, or any flow the user does not want to run through experimental web-session commands.
 
 ## Canonical path
@@ -89,7 +89,7 @@ asc validate iap --app "APP_ID" --output table
 asc validate subscriptions --app "APP_ID" --output table
 ```
 
-In `0.45.3+`, `asc validate subscriptions` expands `MISSING_METADATA` into per-subscription diagnostics. Use it to pinpoint missing review screenshots, promotional images, pricing or availability coverage, offer readiness, and app/build evidence before you retry submission or `attach-group`.
+In current asc, `asc validate subscriptions` expands `MISSING_METADATA` into per-subscription diagnostics. Use it to pinpoint missing review screenshots, promotional images, pricing or availability coverage, offer readiness, and app/build evidence before you retry submission or `attach-group`.
 
 When territory coverage is wrong, the newest diagnostics name the exact missing territories instead of only reporting count mismatches. Use `--output json --pretty` when you want machine-readable diagnostics.
 
@@ -118,17 +118,16 @@ Check:
 asc pricing availability view --app "APP_ID"
 ```
 
-Bootstrap the first availability record with the public API:
+Bootstrap the first availability record with the experimental web-session flow:
 
 ```bash
-asc pricing availability create \
+asc web apps availability create \
   --app "APP_ID" \
   --territory "USA,GBR" \
-  --available true \
   --available-in-new-territories true
 ```
 
-After bootstrap, use the normal API command for ongoing updates:
+After bootstrap, use the normal public API command for ongoing updates:
 
 ```bash
 asc pricing availability edit \
@@ -338,7 +337,7 @@ asc review submissions-submit --id "SUBMISSION_ID" --confirm
 - `asc validate` is the deeper API-side checklist for version readiness.
 - `asc validate subscriptions` now exposes much richer per-subscription diagnostics for `MISSING_METADATA` readiness failures.
 - Web-session commands are experimental and should be presented as optional escape hatches when the public API cannot complete the first-time flow.
-- Public `asc pricing availability create` now covers the first app-availability bootstrap case.
+- First-time app-availability bootstrap now goes through the experimental `asc web apps availability create` flow or App Store Connect itself.
 - First-review subscriptions have a concrete CLI attach path; first-review IAP selection still may require the App Store Connect version UI.
 - Game Center can require explicit review-submission item management when components must ride with the app version.
 - If the user asks "why did submission fail?" map the failure back into the three buckets above: API-fixable, web-session-fixable, or manual fallback.

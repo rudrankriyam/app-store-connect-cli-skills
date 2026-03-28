@@ -124,7 +124,7 @@ macOS requires ICNS format icons with all sizes:
 - 16x16, 32x32, 128x128, 256x256, 512x512 (1x and 2x)
 
 ### CFBundleVersion too low
-The build number must be higher than any previously uploaded build. Increment it with `asc xcode version bump --type build` (or `asc xcode version edit --build-number "NEXT"`) and rebuild.
+The build number must be higher than any previously uploaded build. Increment it with `asc xcode version bump --type build`, or resolve a remote-safe number with `asc builds next-build-number --app "APP_ID" --version "2.2.0" --platform IOS` and then apply it with `asc xcode version edit --build-number "NEXT_BUILD"` before rebuilding.
 
 ## Notes
 - Always clean before archive for release builds

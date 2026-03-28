@@ -85,7 +85,7 @@ Agent-first screenshot pipeline using xcodebuild/simctl, AXe, JSON plans, `asc s
 - You want AXe-based UI driving before capture
 - You need a staged pipeline (capture -> frame -> upload)
 - You need to discover supported frame devices (`asc screenshots list-frame-devices`)
-- You want pinned Koubou guidance for deterministic framing (`koubou==0.18.0`)
+- You want pinned Koubou guidance for deterministic framing (`koubou==0.18.1`)
 
 **Example:**
 

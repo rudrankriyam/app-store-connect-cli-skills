@@ -13,7 +13,7 @@ Use this skill when you need to run or design `asc` commands for App Store Conne
   - `asc builds --help`
   - `asc builds list --help`
 
-## Canonical verbs (0.45.x+)
+## Canonical verbs (current asc)
 - Prefer `view` over legacy `get` aliases for read-only commands in docs and automation.
   - `asc apps view --id "APP_ID"`
   - `asc versions view --version-id "VERSION_ID"`

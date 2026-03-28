@@ -125,7 +125,7 @@ asc validate iap --app "APP_ID" --output table
 asc validate subscriptions --app "APP_ID" --output table
 ```
 
-In `0.45.3+`, `asc validate subscriptions` expands `MISSING_METADATA` into a per-subscription diagnostics matrix. Use it to identify missing review screenshots, promotional images, pricing or availability coverage gaps, offer readiness, and app/build evidence before retrying submit or first-review attach.
+In current asc, `asc validate subscriptions` expands `MISSING_METADATA` into a per-subscription diagnostics matrix. Use it to identify missing review screenshots, promotional images, pricing or availability coverage gaps, offer readiness, and app/build evidence before retrying submit or first-review attach.
 
 Use `--output json --pretty` when you want exact territory gaps in machine-readable form.
 
