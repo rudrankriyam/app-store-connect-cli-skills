@@ -12,7 +12,7 @@ Use this skill for agent-driven screenshot workflows where the app is built and 
 - Device discovery is built-in via `asc screenshots list-frame-devices`.
 - Local screenshot automation commands are experimental in asc cli.
 - Framing is pinned to Koubou `0.18.1` for deterministic output.
-- Feedback/issues: https://github.com/rudrankriyam/App-Store-Connect-CLI/issues/new/choose
+- Feedback/issues: https://github.com/rorkai/App-Store-Connect-CLI/issues/new/choose
 
 ## Defaults
 - Settings file: `.asc/shots.settings.json`
