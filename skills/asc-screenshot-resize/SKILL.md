@@ -1,70 +1,40 @@
 ---
 name: asc-screenshot-resize
-description: Resize and validate App Store screenshots for all device classes using macOS sips. Use when preparing or fixing screenshots for App Store Connect submission.
+description: Resize and validate App Store screenshots with current asc screenshot-size data and macOS sips. Use when preparing or fixing screenshots for App Store Connect submission.
 ---
 
 # asc screenshot resize
 
-Use this skill to resize screenshots to the exact pixel dimensions required by App Store Connect and validate they pass upload requirements. Uses the built-in macOS `sips` tool — no third-party dependencies needed.
+Use this skill to prepare screenshots for App Store Connect. Do not rely on a hard-coded dimension table in this skill; the CLI owns the current size matrix.
 
-## Required Dimensions
+## Source of truth
 
-### iPhone
+Always discover current accepted sizes from `asc` first:
 
-| Display Size | Accepted Dimensions (portrait × landscape) |
-|---|---|
-| 6.9" | 1260 × 2736, 2736 × 1260, 1320 × 2868, 2868 × 1320, 1290 × 2796, 2796 × 1290 |
-| 6.5" | 1242 × 2688, 2688 × 1242, 1284 × 2778, 2778 × 1284 |
-| 6.3" | 1206 × 2622, 2622 × 1206, 1179 × 2556, 2556 × 1179 |
-| 6.1" | 1125 × 2436, 2436 × 1125, 1080 × 2340, 2340 × 1080, 1170 × 2532, 2532 × 1170 |
-| 5.5" | 1242 × 2208, 2208 × 1242 |
-| 4.7" | 750 × 1334, 1334 × 750 |
-| 4" | 640 × 1096, 640 × 1136, 1136 × 600, 1136 × 640 |
-| 3.5" | 640 × 920, 640 × 960, 960 × 600, 960 × 640 |
+```bash
+asc screenshots sizes --output table
+asc screenshots sizes --all --output table
+```
 
-**Note:** 6.9" accepts screenshots from 6.5", 6.7", and 6.9" devices. 6.3" accepts from 6.1" and 6.3". 6.1" accepts from 5.4", 5.8", and 6.1".
+For local validation before upload:
 
-### iPad
+```bash
+asc screenshots validate --path "./screenshots/iphone" --device-type "IPHONE_65" --output table
+asc screenshots validate --path "./screenshots/ipad" --device-type "IPAD_PRO_3GEN_129" --output table
+```
 
-| Display Size | Accepted Dimensions |
-|---|---|
-| 13" | 2064 × 2752, 2752 × 2064, 2048 × 2732, 2732 × 2048 |
-| 11" | 1668 × 2420, 2420 × 1668, 1668 × 2388, 2388 × 1668, 1640 × 2360, 2360 × 1640, 1488 × 2266, 2266 × 1488 |
-| iPad Pro 2nd gen 12.9" | 2048 × 2732, 2732 × 2048 |
-| 10.5" | 1668 × 2224, 2224 × 1668 |
-| 9.7" | 1536 × 2008, 1536 × 2048, 2048 × 1496, 2048 × 1536, 768 × 1004, 768 × 1024, 1024 × 748, 1024 × 768 |
+Common current device-type anchors:
 
-### Apple Watch
+- `IPHONE_65` for the common 6.5-inch iPhone screenshot set.
+- `IPAD_PRO_3GEN_129` for the common 12.9/13-inch iPad screenshot set.
 
-| Device | Dimensions |
-|---|---|
-| Ultra 3 (49mm) | 422 × 514, 410 × 502 |
-| Series 11 (46mm) | 416 × 496 |
-| Series 9 (45mm) | 396 × 484 |
-| Series 6 (44mm) | 368 × 448 |
-| Series 3 (42mm) | 312 × 390 |
-
-### Mac
-
-| Dimensions |
-|---|
-| 1280 × 800 |
-| 1440 × 900 |
-| 2560 × 1600 |
-| 2880 × 1800 |
-
-### Apple TV
-
-| Dimensions |
-|---|
-| 1920 × 1080 |
-| 3840 × 2160 |
+Run `asc screenshots sizes --all` when targeting other display types such as 6.9-inch iPhone, Apple TV, Mac, Vision Pro, iMessage, or Watch.
 
 ## Workflow
 
-### 1. Fix Unicode filenames
+### 1. Sanitize filenames
 
-macOS screenshots often contain hidden Unicode characters (e.g., `U+202F` narrow no-break space) that cause `sips` and other tools to fail with "not a valid file". Always sanitize first:
+macOS screenshots can contain hidden Unicode spaces that make tools fail with "not a valid file". Sanitize before batch work:
 
 ```bash
 python3 -c "
@@ -77,51 +47,44 @@ for f in os.listdir('.'):
 "
 ```
 
-### 2. Check current dimensions
+### 2. Inspect dimensions and metadata
 
 ```bash
 sips -g pixelWidth -g pixelHeight screenshot.png
-```
-
-### 3. Validate App Store readiness
-
-Check for alpha channel and color space issues before uploading:
-
-```bash
 sips -g hasAlpha -g space screenshot.png
 ```
 
-App Store Connect rejects screenshots with alpha transparency. Remove it by round-tripping through JPEG:
+App Store Connect rejects screenshots with alpha transparency. Strip alpha by round-tripping through JPEG:
 
 ```bash
-sips -s format jpeg input.png --out /tmp/temp.jpg
-sips -s format png /tmp/temp.jpg --out output.png
-rm /tmp/temp.jpg
+sips -s format jpeg input.png --out /tmp/asc-screenshot-no-alpha.jpg
+sips -s format png /tmp/asc-screenshot-no-alpha.jpg --out output.png
+rm /tmp/asc-screenshot-no-alpha.jpg
 ```
 
-Batch-strip alpha from all PNGs in a directory:
+Batch-strip alpha from PNGs:
 
 ```bash
 for f in *.png; do
   if sips -g hasAlpha "$f" | grep -q "yes"; then
-    sips -s format jpeg "$f" --out /tmp/temp.jpg
-    sips -s format png /tmp/temp.jpg --out "$f"
-    rm /tmp/temp.jpg
+    sips -s format jpeg "$f" --out /tmp/asc-screenshot-no-alpha.jpg
+    sips -s format png /tmp/asc-screenshot-no-alpha.jpg --out "$f"
+    rm /tmp/asc-screenshot-no-alpha.jpg
     echo "Stripped alpha: $f"
   fi
 done
 ```
 
-### 4. Resize a single screenshot
+### 3. Resize only after choosing a target from asc
+
+Pick a width and height from `asc screenshots sizes --all`. `sips -z` takes height first, then width:
 
 ```bash
-# Portrait iPhone 6.5" (1284 × 2778)
+# Example: portrait IPHONE_65 1284 x 2778
 sips -z 2778 1284 input.png --out output.png
 ```
 
-**Note:** `sips -z` takes height first, then width: `sips -z <height> <width>`.
-
-### 5. Batch resize all screenshots in a directory
+Batch resize to a chosen target:
 
 ```bash
 mkdir -p resized
@@ -130,30 +93,30 @@ for f in *.png; do
 done
 ```
 
-### 6. Generate multiple device sizes from one source
-
-```bash
-mkdir -p appstore-screenshots
-# iPhone
-sips -z 2868 1320 input.png --out appstore-screenshots/iphone-6.9.png
-sips -z 2778 1284 input.png --out appstore-screenshots/iphone-6.5.png
-sips -z 2622 1206 input.png --out appstore-screenshots/iphone-6.3.png
-sips -z 2532 1170 input.png --out appstore-screenshots/iphone-6.1.png
-sips -z 2208 1242 input.png --out appstore-screenshots/iphone-5.5.png
-```
-
-### 7. Verify output
+### 4. Validate outputs with asc
 
 ```bash
 sips -g pixelWidth -g pixelHeight -g hasAlpha resized/*.png
+asc screenshots validate --path "./resized" --device-type "IPHONE_65" --output table
 ```
 
-Confirm all files show the target dimensions and `hasAlpha: no`.
+### 5. Upload only after validation
+
+```bash
+asc screenshots upload --version-localization "LOC_ID" --path "./resized" --device-type "IPHONE_65" --dry-run --output table
+asc screenshots upload --version-localization "LOC_ID" --path "./resized" --device-type "IPHONE_65"
+```
 
 ## Guardrails
 
-- `sips` stretches images to fit exact dimensions. For best results, use source screenshots captured at or near the target aspect ratio.
-- Always output to a separate file or directory (`--out`) to preserve originals.
-- App Store Connect requires PNG or JPEG format. `sips` preserves the input format by default.
-- Screenshots **must not** include alpha transparency. Always validate with `sips -g hasAlpha` before upload.
-- Color space must be sRGB. If screenshots use Display P3, convert with: `sips -m "/System/Library/ColorSync/Profiles/sRGB IEC61966-2.1.icc" input.png --out output.png`.
+- Treat `asc screenshots sizes --all` as authoritative; Apple size requirements change.
+- Do not stretch screenshots across incompatible aspect ratios unless the user accepts the visual tradeoff.
+- Always output to a separate file or directory to preserve originals.
+- Screenshots must be PNG or JPEG and must not include alpha transparency.
+- Convert Display P3 or other color spaces to sRGB when needed:
+
+```bash
+sips -m "/System/Library/ColorSync/Profiles/sRGB IEC61966-2.1.icc" input.png --out output.png
+```
+
+- Prefer `asc screenshots validate` over visual inspection before upload.

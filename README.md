@@ -95,7 +95,7 @@ Build my iOS app, capture the home and settings screens in the simulator, frame 
 
 ### asc-release-flow
 
-Readiness-first App Store submission guidance, including `asc release stage`, `asc submit preflight`, and first-time release blockers.
+Readiness-first App Store submission guidance, including `asc validate`, `asc release stage`, `asc review submit`, and first-time release blockers.
 
 **Use when:**
 - You want the quickest answer to "can I submit this app now?"
