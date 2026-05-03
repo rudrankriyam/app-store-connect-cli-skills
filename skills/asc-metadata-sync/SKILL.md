@@ -1,148 +1,155 @@
 ---
 name: asc-metadata-sync
-description: Sync and validate App Store metadata and localizations with asc, including legacy metadata format migration. Use when updating metadata or translations.
+description: Sync, validate, and apply App Store metadata with the current asc canonical metadata workflow. Use when updating metadata, localizations, keywords, or migrating legacy fastlane metadata.
 ---
 
 # asc metadata sync
 
-Use this skill to keep local metadata in sync with App Store Connect.
+Use this skill to keep App Store metadata in sync with App Store Connect. Prefer the canonical `asc metadata` workflow for app-info and version localization fields. Use the lower-level `asc localizations` and `asc migrate` commands only when the user specifically needs `.strings` files or legacy fastlane-format metadata.
 
-## Two Types of Localizations
+## Current canonical workflow
 
-### 1. Version Localizations (per-release)
-Fields: `description`, `keywords`, `whatsNew`, `supportUrl`, `marketingUrl`, `promotionalText`
+### 1. Pull canonical metadata
 
 ```bash
-# List version localizations
-asc localizations list --version "VERSION_ID"
+asc metadata pull --app "APP_ID" --version "1.2.3" --platform IOS --dir "./metadata"
+```
 
-# Download
+If the app has multiple app-info records, resolve the app-info ID first and pass it explicitly:
+
+```bash
+asc apps info list --app "APP_ID" --output table
+asc metadata pull --app "APP_ID" --app-info "APP_INFO_ID" --version "1.2.3" --platform IOS --dir "./metadata"
+```
+
+### 2. Edit local files
+
+Canonical files are written under:
+
+- `metadata/app-info/<locale>.json` for app-level fields: `name`, `subtitle`, `privacyPolicyUrl`, `privacyChoicesUrl`, `privacyPolicyText`
+- `metadata/version/<version>/<locale>.json` for version fields: `description`, `keywords`, `marketingUrl`, `promotionalText`, `supportUrl`, `whatsNew`
+
+Copyright is not a localization field. Manage it with:
+
+```bash
+asc versions update --version-id "VERSION_ID" --copyright "2026 Your Company"
+```
+
+### 3. Validate before upload
+
+```bash
+asc metadata validate --dir "./metadata" --output table
+```
+
+For subscription apps, include the extra Terms of Use / EULA heuristic:
+
+```bash
+asc metadata validate --dir "./metadata" --subscription-app --output table
+```
+
+### 4. Preview and apply
+
+Run a dry run first:
+
+```bash
+asc metadata push --app "APP_ID" --version "1.2.3" --platform IOS --dir "./metadata" --dry-run --output table
+```
+
+Apply after the plan looks correct:
+
+```bash
+asc metadata push --app "APP_ID" --version "1.2.3" --platform IOS --dir "./metadata"
+```
+
+Use `asc metadata apply` when the user wants the apply-named command shape for the same canonical files:
+
+```bash
+asc metadata apply --app "APP_ID" --version "1.2.3" --platform IOS --dir "./metadata" --dry-run
+asc metadata apply --app "APP_ID" --version "1.2.3" --platform IOS --dir "./metadata"
+```
+
+## Keyword-only workflow
+
+Use this when only the version-localization `keywords` field should change:
+
+```bash
+asc metadata keywords diff --app "APP_ID" --version "1.2.3" --platform IOS --dir "./metadata"
+asc metadata keywords apply --app "APP_ID" --version "1.2.3" --platform IOS --dir "./metadata" --confirm
+```
+
+For importing keyword research:
+
+```bash
+asc metadata keywords import --dir "./metadata" --version "1.2.3" --locale "en-US" --input "./keywords.csv"
+asc metadata keywords sync --app "APP_ID" --version "1.2.3" --platform IOS --dir "./metadata" --input "./keywords.csv"
+```
+
+## Quick field updates
+
+For one-off version-localization edits, pass an explicit version selector. Use `--version-id` for deterministic updates when you already have it, or `--version` plus `--platform` when working from a version string.
+
+```bash
+asc apps info edit --app "APP_ID" --version-id "VERSION_ID" --locale "en-US" --whats-new "Bug fixes and improvements"
+asc apps info edit --app "APP_ID" --version "1.2.3" --platform IOS --locale "en-US" --description "Your app description here"
+asc apps info edit --app "APP_ID" --version "1.2.3" --platform IOS --locale "en-US" --keywords "keyword1,keyword2,keyword3"
+asc apps info edit --app "APP_ID" --version "1.2.3" --platform IOS --locale "en-US" --support-url "https://support.example.com"
+```
+
+For app-info fields, prefer the post-create setup command:
+
+```bash
+asc app-setup info set --app "APP_ID" --primary-locale "en-US" --privacy-policy-url "https://example.com/privacy"
+asc app-setup info set --app "APP_ID" --locale "en-US" --name "Your App Name" --subtitle "Your subtitle"
+```
+
+## Lower-level localization files
+
+Use `.strings` files when the user specifically wants import/export files instead of canonical JSON:
+
+```bash
+asc localizations list --version "VERSION_ID" --output table
 asc localizations download --version "VERSION_ID" --path "./localizations"
-
-# Upload from .strings files
+asc localizations upload --version "VERSION_ID" --path "./localizations" --dry-run
 asc localizations upload --version "VERSION_ID" --path "./localizations"
 ```
 
-### 2. App Info Localizations (app-level)
-Fields: `name`, `subtitle`, `privacyPolicyUrl`, `privacyChoicesUrl`, `privacyPolicyText`
+For app-info localizations:
 
 ```bash
-# First, find the app info ID
-asc apps info list --app "APP_ID"
-
-# List app info localizations
-asc localizations list --app "APP_ID" --type app-info --app-info "APP_INFO_ID"
-
-# Upload app info localizations
+asc apps info list --app "APP_ID" --output table
+asc localizations list --app "APP_ID" --type app-info --app-info "APP_INFO_ID" --output table
+asc localizations download --app "APP_ID" --type app-info --app-info "APP_INFO_ID" --path "./app-info-localizations"
+asc localizations upload --app "APP_ID" --type app-info --app-info "APP_INFO_ID" --path "./app-info-localizations" --dry-run
 asc localizations upload --app "APP_ID" --type app-info --app-info "APP_INFO_ID" --path "./app-info-localizations"
 ```
 
-**Note:** If you get "multiple app infos found", you must specify `--app-info` with the correct ID.
+## Legacy fastlane metadata
 
-## Legacy Fastlane Metadata Workflow
+Use this only for existing fastlane-format trees:
 
-### Export current state
 ```bash
 asc migrate export --app "APP_ID" --version-id "VERSION_ID" --output-dir "./fastlane"
-```
-
-### Validate local files
-```bash
 asc migrate validate --fastlane-dir "./fastlane"
-```
-This checks character limits and required fields.
-
-### Import updates
-```bash
 asc migrate import --app "APP_ID" --version-id "VERSION_ID" --fastlane-dir "./fastlane" --dry-run
 asc migrate import --app "APP_ID" --version-id "VERSION_ID" --fastlane-dir "./fastlane"
 ```
 
-## Quick Field Updates
-
-### Version-specific fields
-```bash
-# What's New
-asc apps info edit --app "APP_ID" --locale "en-US" --whats-new "Bug fixes and improvements"
-
-# Description
-asc apps info edit --app "APP_ID" --locale "en-US" --description "Your app description here"
-
-# Keywords
-asc apps info edit --app "APP_ID" --locale "en-US" --keywords "keyword1,keyword2,keyword3"
-
-# Support URL
-asc apps info edit --app "APP_ID" --locale "en-US" --support-url "https://support.example.com"
-```
-
-### Version metadata
-```bash
-# Copyright
-asc versions update --version-id "VERSION_ID" --copyright "2026 Your Company"
-
-# Release type
-asc versions update --version-id "VERSION_ID" --release-type AFTER_APPROVAL
-```
-
-### TestFlight notes
-```bash
-asc build-localizations create --build "BUILD_ID" --locale "en-US" --whats-new "TestFlight notes here"
-```
-
-## .strings File Format
-
-For bulk updates, use .strings files:
-
-```
-// en-US.strings
-"description" = "Your app description";
-"keywords" = "keyword1,keyword2,keyword3";
-"whatsNew" = "What's new in this version";
-"supportUrl" = "https://support.example.com";
-```
-
-For app-info type:
-```
-// en-US.strings (app-info type)
-"privacyPolicyUrl" = "https://example.com/privacy";
-"name" = "Your App Name";
-"subtitle" = "Your subtitle";
-```
-
-## Multi-Language Workflow
-
-1. Export all localizations:
-```bash
-asc localizations download --version "VERSION_ID" --path "./localizations"
-```
-
-2. Translate the .strings files (or use translation service)
-
-3. Upload all at once:
-```bash
-asc localizations upload --version "VERSION_ID" --path "./localizations"
-```
-
-4. Verify:
-```bash
-asc localizations list --version "VERSION_ID" --output table
-```
-
-## Character Limits
+## Character limits
 
 | Field | Limit |
 |-------|-------|
 | Name | 30 |
 | Subtitle | 30 |
-| Keywords | 100 (comma-separated) |
+| Keywords | 100 comma-separated characters |
 | Description | 4000 |
 | What's New | 4000 |
 | Promotional Text | 170 |
 
-Use `asc metadata validate --dir "./metadata"` for canonical metadata trees.
-Use `asc migrate validate --fastlane-dir "./fastlane"` for legacy fastlane-format metadata.
+## Agent behavior
 
-## Notes
-- Version localizations and app info localizations are different; use the right command and `--type` flag.
-- Use `asc localizations list` to confirm available locales and IDs.
-- Privacy Policy URL is in app info localizations, not version localizations.
+- Start with `asc metadata pull` unless the user specifically asks for `.strings` or fastlane metadata.
+- Always run `asc metadata validate` before remote writes.
+- Preview remote changes with `--dry-run` when the command supports it.
+- For quick edits, always pass `--version-id` or `--version` plus `--platform`; do not rely on ambiguous latest-version behavior.
+- Keep app-info fields and version fields separate.
+- Use `--output table` for human verification and JSON for automation.

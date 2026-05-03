@@ -1,217 +1,185 @@
 ---
 name: asc-workflow
-description: Define, validate, and run repo-local multi-step automations with `asc workflow` and `.asc/workflow.json`. Use when migrating from lane tools, wiring CI pipelines, or orchestrating repeatable `asc` + shell release flows with hooks, conditionals, and sub-workflows.
+description: Define, validate, run, resume, and audit repo-local multi-step automations with current `asc workflow` and `.asc/workflow.json`, including step outputs and safe release/TestFlight workflows.
 ---
 
 # asc workflow
 
 Use this skill when you need lane-style automation inside the CLI using:
-- `asc workflow run`
+
 - `asc workflow validate`
 - `asc workflow list`
+- `asc workflow run`
 
-This feature is best for deterministic automation that lives in your repo, is reviewable in PRs, and can run the same way locally and in CI.
+Workflows are repo-local automation files. They run trusted shell commands, stream step output to stderr, and keep stdout as machine-readable JSON.
 
 ## Command discovery
 
-- Always use `--help` to confirm flags and subcommands:
-  - `asc workflow --help`
-  - `asc workflow run --help`
-  - `asc workflow validate --help`
-  - `asc workflow list --help`
+Always verify flags with:
+
+```bash
+asc workflow --help
+asc workflow validate --help
+asc workflow list --help
+asc workflow run --help
+```
 
 ## End-to-end flow
 
-1. Author `.asc/workflow.json`
+1. Author `.asc/workflow.json`.
 2. Validate structure and references:
-   - `asc workflow validate`
-3. Discover available workflows:
-   - `asc workflow list`
-   - `asc workflow list --all` (includes private helpers)
-4. Preview execution without side effects:
-   - `asc workflow run --dry-run beta`
-5. Execute with runtime params:
-   - `asc workflow run beta BUILD_ID:123456789 GROUP_ID:abcdef`
+
+```bash
+asc workflow validate
+```
+
+3. Discover public workflows:
+
+```bash
+asc workflow list
+asc workflow list --all
+```
+
+4. Preview execution:
+
+```bash
+asc workflow run --dry-run beta BUILD_ID:123456789 GROUP_ID:abcdef
+```
+
+5. Execute:
+
+```bash
+asc workflow run beta BUILD_ID:123456789 GROUP_ID:abcdef
+```
+
+6. If a recoverable run fails, resume with the run ID from the JSON result:
+
+```bash
+asc workflow run release --resume "release-20260312T120000Z-deadbeef"
+```
+
+Do not pass extra `KEY:VALUE` params with `--resume`; the saved workflow file, params, and persisted outputs are reused.
 
 ## File location and format
 
 - Default path: `.asc/workflow.json`
 - Override path: `asc workflow run --file ./path/to/workflow.json <name>`
-- JSONC comments are supported (`//` and `/* ... */`)
+- JSONC comments are supported.
+- Top-level hooks: `before_all`, `after_all`, `error`
+- Workflow keys: `description`, `private`, `env`, `steps`
+- Step forms:
+  - string shorthand: `"echo hello"`
+  - `run` shell command
+  - `workflow` sub-workflow call
+  - `name` label
+  - `if` conditional var name
+  - `with` env overrides for workflow-call steps
+  - `outputs` map for JSON stdout extraction from named run steps
 
-## Output and CI contract
+## Outputs
 
-- `stdout`: structured JSON result (`status`, `steps`, durations)
-- `stderr`: step command output, hook output, dry-run previews
-- `asc workflow validate` always prints JSON and returns non-zero when invalid
+Run steps can declare outputs. The command must emit JSON on stdout, so pass `--output json` for `asc` commands that produce outputs.
 
-This enables machine-safe checks:
+Output references use:
 
-```bash
-asc workflow validate | jq -e '.valid == true'
-asc workflow run beta BUILD_ID:123 GROUP_ID:xyz | jq -e '.status == "ok"'
+```text
+${steps.step_name.OUTPUT_NAME}
 ```
 
-## Schema (what the feature supports)
+Rules:
 
-Top-level keys:
-- `env`: global defaults
-- `before_all`: command run once before steps
-- `after_all`: command run once after successful steps
-- `error`: command run when any failure occurs
-- `workflows`: named workflow map
+- A step that declares `outputs` must have a reference-safe `name`.
+- Outputs are allowed on `run` steps, not workflow-call steps.
+- Output-producing names must be unique across workflows that can execute together in the same run graph.
+- Persisted outputs are stored in workflow run state, so do not map secrets into outputs.
 
-Workflow keys:
-- `description`
-- `private` (not directly runnable)
-- `env`
-- `steps`
+## Runtime params
 
-Step forms:
-- String shorthand: `"echo hello"` -> run step
-- Object with:
-  - `run`: shell command
-  - `workflow`: call sub-workflow
-  - `name`: label for reporting
-  - `if`: conditional var name
-  - `with`: env overrides for workflow-call steps only
+`asc workflow run <name> [KEY:VALUE ...]` supports both separators:
 
-## Runtime params (`KEY:VALUE` / `KEY=VALUE`)
+```bash
+asc workflow run beta VERSION:2.1.0
+asc workflow run beta VERSION=2.1.0
+```
 
-- `asc workflow run <name> [KEY:VALUE ...]` supports both separators:
-  - `VERSION:2.1.0`
-  - `VERSION=2.1.0`
-- If both separators exist, the first one wins.
-- Repeated keys are last-write-wins.
-- In step commands, reference params via shell expansion (`$VAR`).
-- Avoid putting secrets in `.asc/workflow.json`; pass them via CI secrets/env.
-
-## Run-tail flags
-
-`asc workflow run` also accepts core flags after the workflow name:
-- `--dry-run`
-- `--pretty`
-- `--file`
-
-Examples:
-- `asc workflow run beta --dry-run`
-- `asc workflow run beta --file .asc/workflow.json BUILD_ID:123`
-
-## Execution semantics
-
-- `before_all` runs once before step execution
-- `after_all` runs only when steps succeed
-- `error` runs on failure (step failure, before/after hook failure)
-- Sub-workflows are executed inline as part of the call step
-- Maximum sub-workflow nesting depth is 16
+Repeated keys are last-write-wins. In shell commands, reference params through shell expansion like `$VERSION`.
 
 ## Env precedence
 
 Main workflow run:
-- `definition.env` < `workflow.env` < CLI params
 
-Sub-workflow call step (`"workflow": "...", "with": {...}`):
-- sub-workflow `env` defaults
-- caller env (including CLI params) overrides
-- step `with` overrides all
+```text
+definition.env < workflow.env < CLI params
+```
 
-## Sub-workflows and private workflows
+Sub-workflow call with `with`:
 
-- Use `"workflow": "<name>"` to call helper workflows.
-- Use `"private": true` for helper-only workflows.
-- Private workflows:
-  - cannot be run directly
-  - can be called by other workflows
-  - are hidden from `asc workflow list` unless `--all` is used
-- Validation catches unknown workflow references and cyclic references.
+```text
+sub-workflow env < caller env and params < step with
+```
 
-## Conditionals (`if`)
+## Conditionals
 
-- Add `"if": "VAR_NAME"` on a step.
-- Step runs only if `VAR_NAME` is truthy.
-- Truthy: `1`, `true`, `yes`, `y`, `on` (case-insensitive).
-- Resolution order for `if` lookup:
-  1. merged workflow env/params
-  2. `os.Getenv(VAR_NAME)`
+Add `"if": "VAR_NAME"` to a step. Truthy values are `1`, `true`, `yes`, `y`, and `on`, case-insensitive. Lookup checks merged workflow env/params first, then process environment.
 
-## Dry-run behavior
-
-- `asc workflow run --dry-run <name>` does not execute commands.
-- It prints previews to `stderr`.
-- Dry-run shows raw commands (without env expansion), which helps avoid secret leakage in previews.
-
-## Shell behavior
-
-- Run steps use `bash -o pipefail -c` when bash is available.
-- Fallback is `sh -c` when bash is unavailable.
-- Pipelines therefore fail correctly in most CI shells when bash exists.
-
-## Practical authoring rules
-
-- Keep workflow files in version control.
-- Use IDs in step commands where possible for deterministic automation.
-- Use `--confirm` for destructive `asc` operations inside steps.
-- Validate first, then dry-run, then real run.
-- Keep hooks lightweight and side-effect aware.
+## Example workflow
 
 ```json
 {
   "env": {
     "APP_ID": "123456789",
-    "VERSION": "1.0.0"
+    "VERSION": "1.0.0",
+    "GROUP_ID": ""
   },
   "before_all": "asc auth status",
   "after_all": "echo workflow_done",
   "error": "echo workflow_failed",
   "workflows": {
     "beta": {
-      "description": "Distribute a build to a TestFlight group and notify",
-      "env": {
-        "GROUP_ID": ""
-      },
+      "description": "Resolve the latest build and distribute it to TestFlight",
       "steps": [
         {
-          "name": "list_builds",
-          "run": "asc builds list --app $APP_ID --sort -uploadedDate --limit 5"
+          "name": "resolve_build",
+          "run": "asc builds info --app $APP_ID --latest --platform IOS --output json",
+          "outputs": {
+            "BUILD_ID": "$.data.id"
+          }
         },
         {
           "name": "list_groups",
-          "run": "asc testflight groups list --app $APP_ID --limit 20"
+          "run": "asc testflight groups list --app $APP_ID --limit 20 --output json"
         },
         {
           "name": "add_build_to_group",
-          "if": "BUILD_ID",
-          "run": "asc builds add-groups --build-id $BUILD_ID --group $GROUP_ID"
-        },
-        {
-          "name": "notify",
-          "if": "SLACK_WEBHOOK",
-          "run": "echo sent_release_notice"
+          "if": "GROUP_ID",
+          "run": "asc builds add-groups --build-id ${steps.resolve_build.BUILD_ID} --group $GROUP_ID"
         }
       ]
     },
     "release": {
-      "description": "Submit a version for App Store review",
+      "description": "Validate, stage, and submit an App Store version",
       "steps": [
         {
-          "workflow": "sync-metadata",
-          "with": {
-            "METADATA_DIR": "./metadata"
-          }
+          "name": "validate",
+          "run": "asc validate --app $APP_ID --version $VERSION --platform IOS --output json"
+        },
+        {
+          "name": "stage",
+          "run": "asc release stage --app $APP_ID --version $VERSION --build $BUILD_ID --metadata-dir ./metadata/version/$VERSION --confirm --output json"
         },
         {
           "name": "submit",
-          "run": "asc submit create --app $APP_ID --version $VERSION --build $BUILD_ID --confirm"
+          "if": "SUBMIT_FOR_REVIEW",
+          "run": "asc review submit --app $APP_ID --version $VERSION --build $BUILD_ID --confirm --output json"
         }
       ]
     },
-    "sync-metadata": {
-      "private": true,
-      "description": "Private helper workflow (callable only via workflow steps)",
+    "publish-appstore": {
+      "description": "High-level upload plus App Store review submission",
       "steps": [
         {
-          "name": "migrate_validate",
-          "run": "echo METADATA_DIR_is_$METADATA_DIR"
+          "name": "publish",
+          "run": "asc publish appstore --app $APP_ID --ipa ./build/MyApp.ipa --version $VERSION --wait --submit --confirm --output json"
         }
       ]
     }
@@ -222,18 +190,20 @@ Sub-workflow call step (`"workflow": "...", "with": {...}`):
 ## Useful invocations
 
 ```bash
-# Validate and fail CI on invalid file
 asc workflow validate | jq -e '.valid == true'
-
-# Show discoverable workflows
 asc workflow list --pretty
-
-# Include private helpers
 asc workflow list --all --pretty
-
-# Preview a real run
 asc workflow run --dry-run beta BUILD_ID:123 GROUP_ID:grp_abc
-
-# Run with params and assert success
 asc workflow run beta BUILD_ID:123 GROUP_ID:grp_abc | jq -e '.status == "ok"'
+asc workflow run release BUILD_ID:123 SUBMIT_FOR_REVIEW:true
+asc workflow run release --resume "release-20260312T120000Z-deadbeef"
 ```
+
+## Safety rules
+
+- Treat `.asc/workflow.json` like code; only run trusted workflow files.
+- Avoid running workflows from untrusted PRs with secrets.
+- Keep workflow files in version control.
+- Validate first, dry-run next, then run.
+- Use explicit IDs and `--confirm` for mutating steps.
+- Use `asc validate`, `asc release stage`, `asc review submit`, and `asc publish appstore`; do not use removed submission commands.
